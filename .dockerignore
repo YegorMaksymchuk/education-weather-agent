@@ -1,0 +1,48 @@
+# Git and IDE
+.git
+.gitignore
+.cursor
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Virtual env and build artifacts
+venv
+.venv
+env
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache
+.coverage
+htmlcov
+.tox
+.nox
+.mypy_cache
+.ruff_cache
+*.egg-info
+.eggs
+dist
+build
+*.egg
+
+# Secrets and env (never in image)
+.env
+.env.*
+!.env.example
+
+# Tests and docs (not needed at runtime)
+tests
+doc
+*.plan.md
+compass_artifact_*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Optional: keep README for image metadata
+# README.md
