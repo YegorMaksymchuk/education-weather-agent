@@ -1,0 +1,10 @@
+services:
+  weather-agent:
+    build: .
+    image: weather-agent:latest
+    container_name: weather-agent
+    env_file: .env
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp

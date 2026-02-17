@@ -62,21 +62,67 @@ python main.py
 
 Бот працює в режимі long polling і відповідає на текстові повідомлення.
 
-## Make
+## Docker
 
-У корені проєкту є **Makefile** (venv з урахуванням ОС, залежності, запуск бота з версією промпта, тести). Потрібен `make`.
+Образ збирається за **multi-stage** Dockerfile: етап builder (Python 3.12 slim) встановлює залежності в `/opt/venv`, етап runtime копіює лише venv та код і запускає контейнер від користувача **appuser** (non-root). Секрети в образ не потрапляють; `docker-compose.yml` підключає `env_file: .env`, `read_only: true`, `tmpfs: /tmp`, `restart: unless-stopped`.
+
+**Через Make (рекомендовано):**
+
+Перед першим запуском створіть `.env` з `TELEGRAM_BOT_TOKEN` та `OPENAI_API_KEY`.
 
 ```bash
-make help              # Список цілей
-make install           # venv + встановлення залежностей та dev-залежностей
-make run               # Запуск бота (PROMPT_VERSION=2 за замовчуванням)
+make docker-build    # Зібрати образ (за замовчуванням weather-agent:latest)
+make docker-run     # Зібрати і запустити контейнер з --env-file .env (один раз, у foreground)
+make docker-up      # Зібрати і запустити у фоні (docker compose up -d)
+make docker-down    # Зупинити контейнер (docker compose down)
+make docker-logs    # Логи (docker compose logs -f)
+```
+
+Ім’я образу можна змінити: `make docker-build DOCKER_IMAGE=my-agent:v1`.
+
+**Вручну (docker):**
+
+```bash
+docker build -t weather-agent:latest .
+docker run --rm --read-only --tmpfs /tmp --env-file .env weather-agent:latest
+```
+
+**Вручну (змінні в CLI):**
+
+```bash
+docker run --rm --read-only --tmpfs /tmp \
+  -e TELEGRAM_BOT_TOKEN=... -e OPENAI_API_KEY=... \
+  weather-agent:latest
+```
+
+**Вручну (Compose):**
+
+```bash
+docker compose up -d
+```
+
+**Безпека:** не копіюйте `.env` в образ; передавайте секрети через `-e` або `--env-file`. Для перевірки образу: `docker scout` або `trivy image`.
+
+## Make
+
+У корені проєкту є **Makefile** (venv з урахуванням ОС, залежності, запуск бота, тести, Docker). Потрібен `make`.
+
+```bash
+make help              # Список усіх цілей
+make install            # venv + встановлення залежностей та dev-залежностей
+make run                # Запуск бота (PROMPT_VERSION=2 за замовчуванням)
 make run PROMPT_VERSION=1
 make run-prompt-1      # Бот з промптом v1
 make run-prompt-2      # Бот з промптом v2
-make test-no-llm      # Тести без реального LLM (для CI)
-make test             # Усі тести
-make test-unit-mock   # Лише UnitMock
-make test-coverage    # Покриття (без LLM-тестів)
+make test-no-llm       # Тести без реального LLM (для CI)
+make test              # Усі тести
+make test-unit-mock    # Лише UnitMock
+make test-coverage     # Покриття (без LLM-тестів)
+make docker-build      # Зібрати Docker-образ
+make docker-run        # Зібрати і запустити контейнер (--env-file .env)
+make docker-up        # docker compose up -d
+make docker-down      # docker compose down
+make docker-logs      # docker compose logs -f
 ```
 
 На Windows використовуйте `make` з Git Bash або WSL; Makefile визначає `venv\Scripts` для Windows.
@@ -94,7 +140,10 @@ make test-coverage    # Покриття (без LLM-тестів)
 ```
 support-wather-agent/
 ├── main.py                    # Точка входу: .env, перевірка конфігу, запуск бота
-├── Makefile                   # Автоматизація: venv, install, run, test, coverage
+├── Makefile                   # Автоматизація: venv, install, run, test, docker-build/run/up/down/logs
+├── Dockerfile                 # Multi-stage: builder (venv) + runtime (appuser, CMD main.py)
+├── docker-compose.yml         # Сервіс weather-agent: env_file, read_only, tmpfs, restart
+├── .dockerignore              # Контекст збірки без тестів, venv, .env
 ├── pyproject.toml             # Метадані пакета, залежності, pytest markers
 ├── requirements.txt           # Залежності для pip
 ├── .env.example               # Шаблон змінних (TELEGRAM_BOT_TOKEN, OPENAI_API_KEY, PROMPT_VERSION)

@@ -16,9 +16,13 @@ endif
 
 PROMPT_VERSION ?= 2
 
+# Docker image name (override: make docker-build DOCKER_IMAGE=my-agent:v1)
+DOCKER_IMAGE ?= weather-agent:latest
+
 .PHONY: help venv install install-prod run run-prompt-1 run-prompt-2
 .PHONY: test test-no-llm test-coverage
 .PHONY: test-unit-mock test-unit-llm test-integration-mock test-integration-llm test-system-mock test-system-llm
+.PHONY: docker-build docker-run docker-up docker-down docker-logs
 .PHONY: clean
 
 help:
@@ -38,6 +42,11 @@ help:
 	@echo "  test-integration-llm   Run tests/IntegrationLLM/ (needs OPENAI_API_KEY)"
 	@echo "  test-system-mock  Run tests/SystemMock/"
 	@echo "  test-system-llm   Run tests/SystemLLM/ (needs OPENAI_API_KEY)"
+	@echo "  docker-build      Build Docker image ($(DOCKER_IMAGE))"
+	@echo "  docker-run        Run container with --env-file .env (read-only, tmpfs /tmp)"
+	@echo "  docker-up         docker compose up -d"
+	@echo "  docker-down       docker compose down"
+	@echo "  docker-logs       docker compose logs -f"
 	@echo "  clean             Remove venv, __pycache__, .pytest_cache"
 
 venv:
@@ -85,6 +94,22 @@ test-system-mock: install
 
 test-system-llm: install
 	$(VENV_PYTHON) -m pytest tests/SystemLLM/ -v
+
+# --- Docker ---
+docker-build:
+	docker build -t $(DOCKER_IMAGE) .
+
+docker-run: docker-build
+	docker run --rm --read-only --tmpfs /tmp --env-file .env $(DOCKER_IMAGE)
+
+docker-up: docker-build
+	docker compose up -d
+
+docker-down:
+	docker compose down
+
+docker-logs:
+	docker compose logs -f
 
 clean:
 	rm -rf venv .pytest_cache

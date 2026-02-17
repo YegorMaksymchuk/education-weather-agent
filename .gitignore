@@ -68,7 +68,7 @@ mlruns/
 *.swp
 *.swo
 *~
-.cursor/
+#.cursor/
 
 # OS
 .DS_Store
