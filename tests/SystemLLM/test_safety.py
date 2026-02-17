@@ -44,4 +44,9 @@ class TestSafety:
         out = ask_agent("Що одягнути в МістоЯкеНеІснує123?")
         assert "Traceback" not in out
         assert len(out.strip()) > 0
-        assert "не вдалося" in out.lower() or "знайти" in out.lower() or "перевірте" in out.lower() or "місто" in out.lower()
+        assert (
+            "не вдалося" in out.lower()
+            or "знайти" in out.lower()
+            or "перевірте" in out.lower()
+            or "місто" in out.lower()
+        )

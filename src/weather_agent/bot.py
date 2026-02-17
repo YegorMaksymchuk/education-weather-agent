@@ -69,9 +69,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return
 
     done = asyncio.Event()
-    typing_task = asyncio.create_task(
-        _typing_loop(context.bot, chat_id, done)
-    )
+    typing_task = asyncio.create_task(_typing_loop(context.bot, chat_id, done))
     try:
         await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
         reply = await asyncio.to_thread(ask_agent, user_text)
@@ -98,7 +96,5 @@ def build_application(token: str) -> Application:
     app = Application.builder().token(token).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_command))
-    app.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)
-    )
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     return app

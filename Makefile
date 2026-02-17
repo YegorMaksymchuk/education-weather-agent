@@ -22,6 +22,7 @@ DOCKER_IMAGE ?= weather-agent:latest
 .PHONY: help venv install install-prod run run-prompt-1 run-prompt-2
 .PHONY: test test-no-llm test-coverage
 .PHONY: test-unit-mock test-unit-llm test-integration-mock test-integration-llm test-system-mock test-system-llm
+.PHONY: lint lint-fix code-security dependency-security ci
 .PHONY: docker-build docker-run docker-up docker-down docker-logs
 .PHONY: clean
 
@@ -42,6 +43,11 @@ help:
 	@echo "  test-integration-llm   Run tests/IntegrationLLM/ (needs OPENAI_API_KEY)"
 	@echo "  test-system-mock  Run tests/SystemMock/"
 	@echo "  test-system-llm   Run tests/SystemLLM/ (needs OPENAI_API_KEY)"
+	@echo "  lint              Ruff check + format check (same as CI)"
+	@echo "  lint-fix          Ruff check --fix + format"
+	@echo "  code-security     Bandit scan on src/"
+	@echo "  dependency-security  pip-audit on installed deps"
+	@echo "  ci                lint + code-security + dependency-security + test-no-llm"
 	@echo "  docker-build      Build Docker image ($(DOCKER_IMAGE))"
 	@echo "  docker-run        Run container with --env-file .env (read-only, tmpfs /tmp)"
 	@echo "  docker-up         docker compose up -d"
@@ -94,6 +100,25 @@ test-system-mock: install
 
 test-system-llm: install
 	$(VENV_PYTHON) -m pytest tests/SystemLLM/ -v
+
+# --- Lint and security (mirror CI) ---
+lint: install
+	$(VENV_PYTHON) -m ruff check .
+	$(VENV_PYTHON) -m ruff format --check .
+
+lint-fix: install
+	$(VENV_PYTHON) -m ruff check . --fix
+	$(VENV_PYTHON) -m ruff format .
+
+code-security: install
+	$(VENV_PIP) install bandit
+	$(VENV_PYTHON) -m bandit -r src/ -ll
+
+dependency-security: install
+	$(VENV_PIP) install pip-audit
+	$(VENV_PYTHON) -m pip_audit
+
+ci: lint code-security dependency-security test-no-llm
 
 # --- Docker ---
 docker-build:

@@ -25,6 +25,7 @@ class TestTaskCompletion:
     def test_weather_advice_returns_non_empty_relevant_reply(self):
         """For a weather query, agent returns a non-empty reply about clothing/weather."""
         from weather_agent.agent import ask_agent
+
         out = ask_agent("Порадь, що одягнути в Києві.")
         assert isinstance(out, str)
         assert len(out.strip()) > 0

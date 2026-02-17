@@ -1,0 +1,179 @@
+# CI: lint, code security, dependency security, 6 test groups (parallel jobs)
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  lint:
+    name: Lint (Ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Ruff
+        run: pip install ruff
+
+      - name: Ruff check
+        run: ruff check .
+      - name: Ruff format check
+        run: ruff format --check .
+
+  code-security:
+    name: Code security (Bandit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Bandit
+        run: pip install bandit
+
+      - name: Bandit scan
+        run: bandit -r src/ -ll
+
+  dependency-security:
+    name: Dependency security (pip-audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install pip-audit and run
+        run: |
+          pip install pip-audit
+          pip-audit
+
+  test-unit-mock:
+    name: Test UnitMock
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install project
+        run: pip install -e ".[dev]"
+
+      - name: Pytest UnitMock
+        run: pytest tests/UnitMock/ -v
+
+  test-unit-llm:
+    name: Test UnitLLM
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install project
+        run: pip install -e ".[dev]"
+
+      - name: Pytest UnitLLM
+        run: pytest tests/UnitLLM/ -v
+
+  test-integration-mock:
+    name: Test IntegrationMock
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install project
+        run: pip install -e ".[dev]"
+
+      - name: Pytest IntegrationMock
+        run: pytest tests/IntegrationMock/ -v
+
+  test-integration-llm:
+    name: Test IntegrationLLM (DeepEval)
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install project
+        run: pip install -e ".[dev]"
+
+      - name: Pytest IntegrationLLM
+        run: pytest tests/IntegrationLLM/ -v
+
+  test-system-mock:
+    name: Test SystemMock
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install project
+        run: pip install -e ".[dev]"
+
+      - name: Pytest SystemMock
+        run: pytest tests/SystemMock/ -v
+
+  test-system-llm:
+    name: Test SystemLLM
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install project
+        run: pip install -e ".[dev]"
+
+      - name: Pytest SystemLLM
+        run: pytest tests/SystemLLM/ -v

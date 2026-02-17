@@ -34,15 +34,15 @@ def ask_agent(user_text: str) -> str:
 
     try:
         agent = _get_agent()
-        result = agent.invoke(
-            {"messages": [{"role": "user", "content": user_text.strip()}]}
-        )
+        result = agent.invoke({"messages": [{"role": "user", "content": user_text.strip()}]})
         messages = result.get("messages") or []
         if not messages:
             return "Не вдалося отримати відповідь. Спробуйте ще раз."
 
         last = messages[-1]
-        content = getattr(last, "content", None) or (last.get("content") if isinstance(last, dict) else None)
+        content = getattr(last, "content", None) or (
+            last.get("content") if isinstance(last, dict) else None
+        )
         if isinstance(content, list):
             # Деякі моделі повертають content як список частин
             text_parts = [p.get("text", p) if isinstance(p, dict) else str(p) for p in content]
