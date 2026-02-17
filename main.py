@@ -21,6 +21,7 @@ logging.basicConfig(
     stream=sys.stdout,
 )
 
+
 def main() -> None:
     load_dotenv()
 

@@ -16,6 +16,7 @@ class TestAgentToolIntegration:
         self, mock_httpx_geocode_kyiv, mock_httpx_forecast
     ):
         """When mock agent returns get_weather result as reply, ask_agent returns it."""
+
         def fake_get(url, params=None, **kwargs):
             r = MagicMock()
             r.raise_for_status = MagicMock()
@@ -53,6 +54,7 @@ class TestAgentToolIntegration:
 
     def test_tool_contract_returns_string(self, mock_httpx_geocode_kyiv, mock_httpx_forecast):
         """get_weather returns string for valid city with mocked HTTP."""
+
         def fake_get(url, params=None, **kwargs):
             r = MagicMock()
             r.raise_for_status = MagicMock()

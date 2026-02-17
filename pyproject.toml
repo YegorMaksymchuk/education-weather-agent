@@ -23,6 +23,7 @@ dev = [
     "pytest-asyncio>=0.24",
     "pytest-cov>=5.0",
     "deepeval>=0.21",
+    "ruff>=0.8.0",
 ]
 
 [tool.pytest.ini_options]
@@ -37,6 +38,19 @@ markers = [
     "system_llm: E2E with real agent and safety (needs API key)",
     "safety: safety tests (injection, leakage, abuse)",
 ]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+src = ["src", "tests", "main.py"]
+
+[tool.ruff.lint.per-file-ignores]
+"main.py" = ["E402"]
+"tests/IntegrationLLM/test_deepeval_metrics.py" = ["E402"]
+"tests/SystemLLM/test_safety.py" = ["E402"]
+
+[tool.ruff.format]
+quote-style = "double"
 
 [tool.setuptools.packages.find]
 where = ["src"]

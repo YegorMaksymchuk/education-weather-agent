@@ -6,8 +6,6 @@ from unittest.mock import patch, MagicMock
 from weather_agent.weather import (
     get_weather,
     _weather_code_to_text,
-    _geocode,
-    _fetch_forecast,
 )
 
 
@@ -42,9 +40,7 @@ class TestWeatherCodeToText:
 class TestGetWeatherWithMockedHttp:
     """Test get_weather with mocked httpx.Client."""
 
-    def test_returns_weather_string_for_kyiv(
-        self, mock_httpx_geocode_kyiv, mock_httpx_forecast
-    ):
+    def test_returns_weather_string_for_kyiv(self, mock_httpx_geocode_kyiv, mock_httpx_forecast):
         def fake_get(url, params=None, **kwargs):
             r = MagicMock()
             r.raise_for_status = MagicMock()
@@ -84,6 +80,7 @@ class TestGetWeatherWithMockedHttp:
 
     def test_returns_error_on_http_failure(self):
         import httpx
+
         with patch("weather_agent.weather.httpx.Client") as mock_client_cls:
             mock_client = MagicMock()
             mock_client.__enter__ = MagicMock(return_value=mock_client)

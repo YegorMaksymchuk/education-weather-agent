@@ -103,26 +103,40 @@ docker compose up -d
 
 **Безпека:** не копіюйте `.env` в образ; передавайте секрети через `-e` або `--env-file`. Для перевірки образу: `docker scout` або `trivy image`.
 
+## CI (GitHub Actions)
+
+У репозиторії налаштовані два workflow:
+
+- **`.github/workflows/ci.yml`** — на `push` та `pull_request` до `main`/`master`: лінтер (Ruff), аналіз безпеки коду (Bandit), аналіз залежностей (pip-audit), шість груп тестів (UnitMock, UnitLLM, IntegrationMock, IntegrationLLM, SystemMock, SystemLLM). Для IntegrationLLM і SystemLLM у репозиторії має бути налаштований secret **OPENAI_API_KEY** (якщо його немає, ці тести пропускаються).
+- **`.github/workflows/release.yml`** — при push тегу `v*` (наприклад `v1.0.0`): збірка Docker-образу та push у GitHub Container Registry. Образ тегується як `ghcr.io/<owner>/<repo>:sha-<short-sha>` та `ghcr.io/<owner>/<repo>:<git-tag>`.
+
+Ті самі перевірки можна запустити локально через Make: `make lint`, `make code-security`, `make dependency-security`, `make test-no-llm` або одним викликом `make ci`.
+
 ## Make
 
-У корені проєкту є **Makefile** (venv з урахуванням ОС, залежності, запуск бота, тести, Docker). Потрібен `make`.
+У корені проєкту є **Makefile** (venv з урахуванням ОС, залежності, запуск бота, тести, lint/безпека, Docker). Потрібен `make`.
 
 ```bash
-make help              # Список усіх цілей
+make help               # Список усіх цілей
 make install            # venv + встановлення залежностей та dev-залежностей
 make run                # Запуск бота (PROMPT_VERSION=2 за замовчуванням)
 make run PROMPT_VERSION=1
-make run-prompt-1      # Бот з промптом v1
-make run-prompt-2      # Бот з промптом v2
-make test-no-llm       # Тести без реального LLM (для CI)
-make test              # Усі тести
-make test-unit-mock    # Лише UnitMock
-make test-coverage     # Покриття (без LLM-тестів)
-make docker-build      # Зібрати Docker-образ
-make docker-run        # Зібрати і запустити контейнер (--env-file .env)
-make docker-up        # docker compose up -d
-make docker-down      # docker compose down
-make docker-logs      # docker compose logs -f
+make run-prompt-1       # Бот з промптом v1
+make run-prompt-2       # Бот з промптом v2
+make test-no-llm        # Тести без реального LLM (для CI)
+make test               # Усі тести
+make test-unit-mock     # Лише UnitMock
+make test-coverage      # Покриття (без LLM-тестів)
+make lint               # Ruff check + format check (як у CI)
+make lint-fix           # Ruff check --fix + format
+make code-security      # Bandit scan (src/)
+make dependency-security # pip-audit
+make ci                 # lint + code-security + dependency-security + test-no-llm
+make docker-build       # Зібрати Docker-образ
+make docker-run         # Зібрати і запустити контейнер (--env-file .env)
+make docker-up          # docker compose up -d
+make docker-down        # docker compose down
+make docker-logs        # docker compose logs -f
 ```
 
 На Windows використовуйте `make` з Git Bash або WSL; Makefile визначає `venv\Scripts` для Windows.
@@ -140,11 +154,12 @@ make docker-logs      # docker compose logs -f
 ```
 support-wather-agent/
 ├── main.py                    # Точка входу: .env, перевірка конфігу, запуск бота
-├── Makefile                   # Автоматизація: venv, install, run, test, docker-build/run/up/down/logs
+├── Makefile                   # Автоматизація: venv, install, run, test, lint, ci, docker
 ├── Dockerfile                 # Multi-stage: builder (venv) + runtime (appuser, CMD main.py)
 ├── docker-compose.yml         # Сервіс weather-agent: env_file, read_only, tmpfs, restart
 ├── .dockerignore              # Контекст збірки без тестів, venv, .env
-├── pyproject.toml             # Метадані пакета, залежності, pytest markers
+├── .github/workflows/         # GitHub Actions: ci.yml (lint, security, tests), release.yml (GHCR)
+├── pyproject.toml             # Метадані пакета, залежності, pytest markers, Ruff
 ├── requirements.txt           # Залежності для pip
 ├── .env.example               # Шаблон змінних (TELEGRAM_BOT_TOKEN, OPENAI_API_KEY, PROMPT_VERSION)
 ├── .gitignore

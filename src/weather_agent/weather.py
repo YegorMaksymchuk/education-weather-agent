@@ -60,7 +60,7 @@ def _geocode(city: str) -> tuple[float, float, str] | None:
             )
             r.raise_for_status()
             data = r.json()
-    except (httpx.HTTPError, httpx.TimeoutException) as e:
+    except (httpx.HTTPError, httpx.TimeoutException):
         return None
 
     results = data.get("results")
@@ -130,7 +130,12 @@ def get_weather(city: str) -> str:
     wind_str = f"{wind:.0f} км/год" if wind is not None else "—"
     hum_str = f"{humidity:.0f}%" if humidity is not None else "—"
 
-    parts = [f"Температура {temp_str}", f"умови: {cond}", f"вітер {wind_str}", f"вологість {hum_str}"]
+    parts = [
+        f"Температура {temp_str}",
+        f"умови: {cond}",
+        f"вітер {wind_str}",
+        f"вологість {hum_str}",
+    ]
     if feels_str and feels != temp:
         parts.insert(1, f"відчувається {feels_str}")
     return ". ".join(parts) + "."
