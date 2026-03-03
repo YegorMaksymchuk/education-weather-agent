@@ -6,6 +6,7 @@ from langchain_openai import ChatOpenAI
 from weather_agent.config import DEFAULT_MODEL, require_openai_key
 from weather_agent.prompts import get_system_prompt
 from weather_agent.weather import get_weather
+from weather_agent.historical.tools import get_historical_weather
 
 _agent = None
 
@@ -18,7 +19,7 @@ def _get_agent():
         model = ChatOpenAI(model=DEFAULT_MODEL, temperature=0)
         _agent = create_agent(
             model,
-            tools=[get_weather],
+            tools=[get_weather, get_historical_weather],
             system_prompt=get_system_prompt(),
         )
     return _agent

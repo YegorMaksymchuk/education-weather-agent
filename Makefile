@@ -22,7 +22,7 @@ DOCKER_IMAGE ?= weather-agent:latest
 .PHONY: help venv install install-prod run run-prompt-1 run-prompt-2
 .PHONY: test test-no-llm test-coverage
 .PHONY: test-unit-mock test-unit-llm test-integration-mock test-integration-llm test-system-mock test-system-llm
-.PHONY: lint lint-fix code-security dependency-security ci
+.PHONY: lint lint-fix code-security dependency-security ci historical-build
 .PHONY: docker-build docker-run docker-up docker-down docker-logs
 .PHONY: clean
 
@@ -47,6 +47,7 @@ help:
 	@echo "  lint-fix          Ruff check --fix + format"
 	@echo "  code-security     Bandit scan on src/"
 	@echo "  dependency-security  pip-audit on installed deps"
+	@echo "  historical-build  Build ChromaDB index from data/chunks.csv (requires OPENAI_API_KEY)"
 	@echo "  ci                lint + code-security + dependency-security + test-no-llm"
 	@echo "  docker-build      Build Docker image ($(DOCKER_IMAGE))"
 	@echo "  docker-run        Run container with --env-file .env (read-only, tmpfs /tmp)"
@@ -119,6 +120,9 @@ dependency-security: install
 	$(VENV_PYTHON) -m pip_audit
 
 ci: lint code-security dependency-security test-no-llm
+
+historical-build: install
+	$(VENV_PYTHON) -c "from langchain_openai import OpenAIEmbeddings; from weather_agent.config import CHROMA_COLLECTION_NAME, CHROMA_PERSIST_DIR, OPENAI_EMBEDDING_MODEL; from weather_agent.historical.store import build_and_persist_chroma; emb = OpenAIEmbeddings(model=OPENAI_EMBEDDING_MODEL); build_and_persist_chroma('data/chunks.csv', CHROMA_PERSIST_DIR, emb, collection_name=CHROMA_COLLECTION_NAME); print('Built ChromaDB collection', CHROMA_COLLECTION_NAME, 'in', CHROMA_PERSIST_DIR, 'from data/chunks.csv')"
 
 # --- Docker ---
 docker-build:

@@ -23,6 +23,12 @@ class TestGetSystemPrompt:
         assert "одягнути" in p or "погод" in p
         assert "get_weather" in p or "інструмент" in p
 
+    def test_v3_contains_historical_instruction(self):
+        p = get_system_prompt(version="3")
+        assert isinstance(p, str)
+        assert "get_historical_weather" in p
+        assert "історі" in p or "порівняння" in p
+
     def test_nonexistent_version_fallbacks(self):
         p = get_system_prompt(version="99")
         assert isinstance(p, str)

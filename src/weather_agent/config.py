@@ -11,6 +11,11 @@ OPENAI_API_KEY: str | None = os.getenv("OPENAI_API_KEY")
 DEFAULT_MODEL: str = os.getenv("DEFAULT_MODEL", "gpt-4o-mini")
 PROMPT_VERSION: str = os.getenv("PROMPT_VERSION", "2")
 
+# ChromaDB / historical weather RAG
+CHROMA_PERSIST_DIR: str = os.getenv("CHROMA_PERSIST_DIR", "chroma_langchain_db")
+CHROMA_COLLECTION_NAME: str = os.getenv("CHROMA_COLLECTION_NAME", "historical_weather")
+OPENAI_EMBEDDING_MODEL: str = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
+
 
 def require_telegram_token() -> str:
     """Повертає токен бота; якщо відсутній — викликає SystemExit."""
