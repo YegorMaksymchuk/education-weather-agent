@@ -7,6 +7,7 @@ from weather_agent.config import DEFAULT_MODEL, require_openai_key
 from weather_agent.prompts import get_system_prompt
 from weather_agent.weather import get_weather
 from weather_agent.historical.tools import get_historical_weather
+from weather_agent.calendar.google_toolkit import get_calendar_tools_for_agent
 
 _agent = None
 
@@ -17,9 +18,10 @@ def _get_agent():
     if _agent is None:
         require_openai_key()
         model = ChatOpenAI(model=DEFAULT_MODEL, temperature=0)
+        calendar_tools = get_calendar_tools_for_agent()
         _agent = create_agent(
             model,
-            tools=[get_weather, get_historical_weather],
+            tools=[get_weather, get_historical_weather, *calendar_tools],
             system_prompt=get_system_prompt(),
         )
     return _agent
