@@ -5,11 +5,13 @@ from pathlib import Path
 
 import pytest
 
-# Ensure src is on path so weather_agent is importable
+# Ensure src and project root are on path (weather_agent, eval_data)
 _ROOT = Path(__file__).resolve().parent.parent
 _SRC = _ROOT / "src"
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
 
 
 @pytest.fixture
@@ -50,5 +52,5 @@ def mock_httpx_empty_geocode():
 def env_isolate(monkeypatch):
     """Set safe defaults for optional vars. Do not delete OPENAI_API_KEY so IntegrationLLM/SystemLLM can run when set."""
     monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
-    monkeypatch.setenv("PROMPT_VERSION", "2")
+    monkeypatch.setenv("PROMPT_VERSION", "3")
     monkeypatch.setenv("DEFAULT_MODEL", "gpt-4o-mini")

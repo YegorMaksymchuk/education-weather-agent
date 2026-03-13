@@ -2,6 +2,7 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
     branches: [main, master]
   pull_request:
@@ -177,3 +178,23 @@ jobs:
 
       - name: Pytest SystemLLM
         run: pytest tests/SystemLLM/ -v
+
+  test-eval-ragas:
+    name: Test Eval RAGAS
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install project and eval deps
+        run: pip install -e ".[dev]" datasets
+
+      - name: Pytest Eval RAGAS
+        run: pytest tests/eval_ragas/ -v -m eval_ragas

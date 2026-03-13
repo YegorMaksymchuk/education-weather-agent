@@ -50,7 +50,9 @@ pip install -e .
    - **TELEGRAM_BOT_TOKEN** — токен від @BotFather
    - **OPENAI_API_KEY** — ключ з [OpenAI](https://platform.openai.com/api-keys)
 
-3. За бажанням змініть **DEFAULT_MODEL** (за замовчуванням `gpt-4o-mini`) та **PROMPT_VERSION** (1 або 2).
+3. За бажанням змініть:
+   - **DEFAULT_MODEL** (за замовчуванням `gpt-4o-mini`)
+   - **PROMPT_VERSION** (1 — базовий, 2 — тепліший тон, 3 — з історичною погодою/RAG)
 
 ## Запуск
 
@@ -103,6 +105,28 @@ docker compose up -d
 
 **Безпека:** не копіюйте `.env` в образ; передавайте секрети через `-e` або `--env-file`. Для перевірки образу: `docker scout` або `trivy image`.
 
+## Historical / RAG режим
+
+Додатково до поточної погоди агент може підхоплювати **історичні приклади погоди в цей день** (RAG на базі ChromaDB):
+
+- `data/chunks.csv` — вихідний CSV з текстовими описами історичної погоди (city, year, month, day, text).
+- `src/weather_agent/historical/store.py` — побудова/збереження Chroma-колекції з CSV (`build_and_persist_chroma`).
+- `src/weather_agent/historical/retrieval.py` — пошук історичних записів за містом і календарною датою (`retrieve_historical_same_day`).
+- `src/weather_agent/historical/tools.py` — LangChain tool `get_historical_weather`, який агент може викликати після `get_weather`.
+- `prompts/system_prompt_v3.txt` — системний промпт, який підказує агенту використовувати historical/RAG порівняння.
+
+Щоб побудувати локальний індекс ChromaDB (за замовчуванням каталог `CHROMA_PERSIST_DIR=chroma_langchain_db`):
+
+```bash
+make historical-build  # Потрібен OPENAI_API_KEY і доступ до OpenAI embeddings
+```
+
+Після цього агент зможе викликати `get_historical_weather` і додавати до відповіді блок «історична погода в цей день». Для того щоб сильніше підштовхнути модель до такого порівняння, можна запускати бота з `PROMPT_VERSION=3`, наприклад:
+
+```bash
+make run PROMPT_VERSION=3
+```
+
 ## CI (GitHub Actions)
 
 У репозиторії налаштовані два workflow:
@@ -114,7 +138,7 @@ docker compose up -d
 
 ## Make
 
-У корені проєкту є **Makefile** (venv з урахуванням ОС, залежності, запуск бота, тести, lint/безпека, Docker). Потрібен `make`.
+У корені проєкту є **Makefile** (venv з урахуванням ОС, залежності, запуск бота, тести, lint/безпека, Docker, historical/RAG). Потрібен `make`.
 
 ```bash
 make help               # Список усіх цілей
@@ -132,6 +156,7 @@ make lint-fix           # Ruff check --fix + format
 make code-security      # Bandit scan (src/)
 make dependency-security # pip-audit
 make ci                 # lint + code-security + dependency-security + test-no-llm
+make historical-build   # Побудова індексу ChromaDB з data/chunks.csv (потрібен OPENAI_API_KEY)
 make docker-build       # Зібрати Docker-образ
 make docker-run         # Зібрати і запустити контейнер (--env-file .env)
 make docker-up          # docker compose up -d
@@ -154,7 +179,7 @@ make docker-logs        # docker compose logs -f
 ```
 support-wather-agent/
 ├── main.py                    # Точка входу: .env, перевірка конфігу, запуск бота
-├── Makefile                   # Автоматизація: venv, install, run, test, lint, ci, docker
+├── Makefile                   # Автоматизація: venv, install, run, test, lint, ci, docker, historical-build
 ├── Dockerfile                 # Multi-stage: builder (venv) + runtime (appuser, CMD main.py)
 ├── docker-compose.yml         # Сервіс weather-agent: env_file, read_only, tmpfs, restart
 ├── .dockerignore              # Контекст збірки без тестів, venv, .env
@@ -171,12 +196,20 @@ support-wather-agent/
 │   ├── __init__.py
 │   ├── config.py              # Змінні середовища (DEFAULT_MODEL, PROMPT_VERSION тощо)
 │   ├── weather.py             # Tool get_weather: Open-Meteo Geocoding + Forecast
-│   ├── agent.py               # LangChain-агент (create_agent, ask_agent), підключення промпта
+│   ├── agent.py               # LangChain-агент (create_agent, ask_agent), підключення промпта та historical tool
 │   ├── bot.py                 # Telegram long polling: /start, /help, обробка текстових повідомлень
+│   ├── historical/            # Історична погода/RAG (ChromaDB)
+│   │   ├── chunks.py          # Форматування/валідація денних записів
+│   │   ├── store.py           # Побудова та збереження Chroma-колекції з CSV
+│   │   ├── retrieval.py       # Retrieval історичних chunks за (місто, день, місяць)
+│   │   └── tools.py           # LangChain tool get_historical_weather
 │   └── prompts/
 │       ├── __init__.py        # get_system_prompt(version) — читання .txt за PROMPT_VERSION
 │       ├── system_prompt_v1.txt
-│       └── system_prompt_v2.txt
+│       ├── system_prompt_v2.txt
+│       └── system_prompt_v3.txt
+├── data/
+│   └── chunks.csv             # Історичні текстові chunks погоди для побудови ChromaDB
 └── tests/
     ├── conftest.py            # Спільні фікстури та конфіг pytest
     ├── __init__.py

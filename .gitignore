@@ -79,4 +79,7 @@ Desktop.ini
 
 # Project / artifacts (optional: uncomment if you don’t want to track)
 # compass_artifact_*/
+data/
+artifacts/
+chroma_langchain_db/
 # *.plan.md
