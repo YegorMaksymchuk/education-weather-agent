@@ -11,16 +11,62 @@ This guide provides detailed specifications for each of the **6 test layers** in
 
 ---
 
-## Quick Reference Table
+## Quick Reference
 
-| Layer | Scope | Components | LLM | HTTP | Speed | Cost | When to Run | Example |
-|-------|-------|-----------|-----|------|-------|------|------------|---------|
-| **UnitMock** | Single function | `weather._weather_code_to_text()` | ❌ | ❌ | <100ms | $0 | Every commit | `test_weather.py` |
-| **UnitLLM** | Component + fake LLM | Agent message formatting | ✅ Fake | ❌ | <500ms | $0 | Every commit | `test_agent_fake_model.py` |
-| **IntegrationMock** | Multi-component + mocks | Agent + tool + mocked HTTP | ✅ Fake | ❌ | <1s | $0 | Pre-PR | `test_agent_tool_flow.py` |
-| **IntegrationLLM** | Multi-component + real LLM | Agent + tool + real OpenAI | ✅ Real | ❌ | 2-10s | $0.01-0.05 | Per PR (optional) | `test_deepeval_metrics.py` |
-| **SystemMock** | E2E workflow + mocks | Telegram → Bot → Agent (fake) | ✅ Fake | ❌ | <2s | $0 | Pre-PR | `test_bot_handlers.py` |
-| **SystemLLM** | Full E2E + real APIs | Telegram → Bot → Agent (real) | ✅ Real | ✅ | 10-60s | $0.05-0.20 | Nightly/Release | `test_safety.py`, `test_task_completion.py` |
+- **Layer: UnitMock**
+    - Scope: Single function
+    - Components: `weather._weather_code_to_text()`
+    - LLM: ❌
+    - HTTP: ❌
+    - Speed: `<100ms`
+    - Cost: `$0`
+    - When to run: Every commit
+    - Example: `test_weather.py`
+- **Layer: UnitLLM**
+    - Scope: Component + fake LLM
+    - Components: Agent message formatting
+    - LLM: ✅ Fake
+    - HTTP: ❌
+    - Speed: `<500ms`
+    - Cost: `$0`
+    - When to run: Every commit
+    - Example: `test_agent_fake_model.py`
+- **Layer: IntegrationMock**
+    - Scope: Multi-component + mocks
+    - Components: Agent + tool + mocked HTTP
+    - LLM: ✅ Fake
+    - HTTP: ❌
+    - Speed: `<1s`
+    - Cost: `$0`
+    - When to run: Pre-PR
+    - Example: `test_agent_tool_flow.py`
+- **Layer: IntegrationLLM**
+    - Scope: Multi-component + real LLM
+    - Components: Agent + tool + real OpenAI
+    - LLM: ✅ Real
+    - HTTP: ❌
+    - Speed: `2-10s`
+    - Cost: `$0.01-0.05`
+    - When to run: Per PR (optional)
+    - Example: `test_deepeval_metrics.py`
+- **Layer: SystemMock**
+    - Scope: E2E workflow + mocks
+    - Components: Telegram → Bot → Agent (fake)
+    - LLM: ✅ Fake
+    - HTTP: ❌
+    - Speed: `<2s`
+    - Cost: `$0`
+    - When to run: Pre-PR
+    - Example: `test_bot_handlers.py`
+- **Layer: SystemLLM**
+    - Scope: Full E2E + real APIs
+    - Components: Telegram → Bot → Agent (real)
+    - LLM: ✅ Real
+    - HTTP: ✅
+    - Speed: `10-60s`
+    - Cost: `$0.05-0.20`
+    - When to run: Nightly/Release
+    - Example: `test_safety.py`, `test_task_completion.py`
 
 ---
 

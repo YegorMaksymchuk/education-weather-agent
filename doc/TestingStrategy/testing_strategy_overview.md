@@ -14,34 +14,20 @@ This document provides a high-level summary of the testing strategy for the **Ed
 
 The application follows a **6-layer test pyramid** organized by integration depth and execution scope:
 
-```
-                        🔴 SystemLLM (E2E + Real LLM)
-                       /                          \
-                      /    (Slow, Expensive,      \
-                     /      Non-deterministic)     \
-                    /________________________________\
-                   /  🟠 IntegrationLLM (Real LLM)  \
-                  /                                  \
-                 /      (Slower, Moderately         \
-                /        Expensive, Probabilistic)   \
-               /____________________________________ \
-              /  🟡 SystemMock (E2E + Fake LLM)     \
-             /                                       \
-            /       (Medium Speed, Free,             \
-           /         Deterministic)                   \
-          /______________________________________ \
-         /  🟢 IntegrationMock (Fake + Mocked)     \
-        /                                          \
-       /      (Fast, Free, Deterministic)          \
-      /______________________________ \
-     /  🟢 UnitLLM (Fake LLM Unit)     \
-    /                                   \
-   /   (Fast, Free, Deterministic)      \
-  /______________________________ \
- /  🟢 UnitMock (Pure Unit)        \
-/_______________________________/
-   (Fastest, Free, Deterministic)
-```
+From base to top:
+
+1. **🟢 UnitMock (Pure Unit)**
+   - Fastest, free, deterministic
+2. **🟢 UnitLLM (Fake LLM Unit)**
+   - Fast, free, deterministic
+3. **🟢 IntegrationMock (Fake + Mocked)**
+   - Fast, free, deterministic
+4. **🟡 SystemMock (E2E + Fake LLM)**
+   - Medium speed, free, deterministic
+5. **🟠 IntegrationLLM (Real LLM)**
+   - Slower, moderately expensive, probabilistic
+6. **🔴 SystemLLM (E2E + Real LLM)**
+   - Slow, expensive, non-deterministic
 
 **Key Principle**: Write **as many fast, cheap, deterministic tests as possible** at the base (UnitMock). Write expensive, slow tests (SystemLLM) sparingly.
 
@@ -49,14 +35,54 @@ The application follows a **6-layer test pyramid** organized by integration dept
 
 ## Test Layers at a Glance
 
-| Layer | What | Why | LLM | HTTP | Speed | Cost | Frequency |
-|-------|------|-----|-----|------|-------|------|-----------|
-| **UnitMock** | Single functions, no dependencies | Find bugs early | ❌ | ❌ | < 100ms | $0 | Every commit |
-| **UnitLLM** | Component + fake LLM | Test agent structure | ✅ Fake | ❌ | < 500ms | $0 | Every commit |
-| **IntegrationMock** | Agent + tool + mocks | Test workflows | ✅ Fake | ❌ | < 1s | $0 | Every PR |
-| **IntegrationLLM** | Agent + tool + real LLM | Measure quality | ✅ Real | ❌ | 2-10s | $0.01-0.05 | Per PR (optional) |
-| **SystemMock** | Telegram → Agent → Response (mocked) | E2E without costs | ✅ Fake | ❌ | < 2s | $0 | Every PR |
-| **SystemLLM** | Full workflow with real APIs | Production readiness | ✅ Real | ✅ | 10-60s | $0.05-0.20 | Nightly/Release |
+- **UnitMock**
+   - What: Single functions, no dependencies
+   - Why: Find bugs early
+   - LLM: ❌
+   - HTTP: ❌
+   - Speed: `< 100ms`
+   - Cost: `$0`
+   - Frequency: Every commit
+- **UnitLLM**
+   - What: Component + fake LLM
+   - Why: Test agent structure
+   - LLM: ✅ Fake
+   - HTTP: ❌
+   - Speed: `< 500ms`
+   - Cost: `$0`
+   - Frequency: Every commit
+- **IntegrationMock**
+   - What: Agent + tool + mocks
+   - Why: Test workflows
+   - LLM: ✅ Fake
+   - HTTP: ❌
+   - Speed: `< 1s`
+   - Cost: `$0`
+   - Frequency: Every PR
+- **IntegrationLLM**
+   - What: Agent + tool + real LLM
+   - Why: Measure quality
+   - LLM: ✅ Real
+   - HTTP: ❌
+   - Speed: `2-10s`
+   - Cost: `$0.01-0.05`
+   - Frequency: Per PR (optional)
+- **SystemMock**
+   - What: Telegram -> Agent -> Response (mocked)
+   - Why: E2E without costs
+   - LLM: ✅ Fake
+   - HTTP: ❌
+   - Speed: `< 2s`
+   - Cost: `$0`
+   - Frequency: Every PR
+- **SystemLLM**
+   - What: Full workflow with real APIs
+   - Why: Production readiness
+   - LLM: ✅ Real
+   - HTTP: ✅
+   - Speed: `10-60s`
+   - Cost: `$0.05-0.20`
+   - Frequency: Nightly/Release
 
 ---
 
@@ -161,20 +187,38 @@ Is the AI output actually good quality?
 ## Key Metrics & KPIs
 
 ### Coverage
-| Metric | Current | Target | Cadence |
-|--------|---------|--------|---------|
-| Test Coverage | ~40% | 80%+ | Every PR |
-| UnitMock Tests | 20 | 50+ | Every commit |
-| Integration Tests | 5 | 25+ | Every PR |
-| Safety Tests | 3 | 10+ | Every release |
+
+- **Test Coverage**
+   - Current: `~40%`
+   - Target: `80%+`
+   - Cadence: Every PR
+- **UnitMock Tests**
+   - Current: `20`
+   - Target: `50+`
+   - Cadence: Every commit
+- **Integration Tests**
+   - Current: `5`
+   - Target: `25+`
+   - Cadence: Every PR
+- **Safety Tests**
+   - Current: `3`
+   - Target: `10+`
+   - Cadence: Every release
 
 ### Quality
-| Metric | Target | Tracking |
-|--------|--------|----------|
-| Test Reliability | 99%+ | CI dashboard |
-| Avg Response Time | < 10s | Weekly (SystemLLM) |
-| Cost per Test | < $0.10 | Monthly audit |
-| False Positive Rate | < 1% | Per test run |
+
+- **Test Reliability**
+   - Target: `99%+`
+   - Tracking: CI dashboard
+- **Avg Response Time**
+   - Target: `< 10s`
+   - Tracking: Weekly (SystemLLM)
+- **Cost per Test**
+   - Target: `< $0.10`
+   - Tracking: Monthly audit
+- **False Positive Rate**
+   - Target: `< 1%`
+   - Tracking: Per test run
 
 ---
 
@@ -197,16 +241,15 @@ pytest -m integration_mock
 ```
 
 **Marker Hierarchy**:
-```
-unit_mock          → Single function, no LLM/HTTP
-unit_llm           → Component + fake LLM
-integration_mock   → Multi-component + mocks
-integration_llm    → Multi-component + real LLM
-system_mock        → E2E + fake LLM
-system_llm         → E2E + real LLM
-safety             → Security & injection tests
-performance        → Load & latency tests
-```
+
+- `unit_mock`: Single function, no LLM/HTTP
+- `unit_llm`: Component + fake LLM
+- `integration_mock`: Multi-component + mocks
+- `integration_llm`: Multi-component + real LLM
+- `system_mock`: E2E + fake LLM
+- `system_llm`: E2E + real LLM
+- `safety`: Security and injection tests
+- `performance`: Load and latency tests
 
 ---
 
@@ -228,15 +271,18 @@ make test-all                     # + SystemLLM (~5-10 min)
 ```
 
 ### CI/CD Pipeline
-```
-Commit → UnitMock + UnitLLM (must pass)
-   ↓
-PR → + IntegrationMock + SystemMock (must pass)
-   ↓
-Merge to main → + IntegrationLLM (optional)
-   ↓
-Release tag → + SystemLLM + Performance (pre-release only)
-```
+
+1. **Commit stage**
+   - Run: UnitMock + UnitLLM
+   - Requirement: Must pass
+2. **PR stage**
+   - Run: IntegrationMock + SystemMock (in addition to commit stage)
+   - Requirement: Must pass
+3. **Merge to main**
+   - Run: IntegrationLLM (optional)
+4. **Release tag**
+   - Run: SystemLLM + Performance
+   - Usage: Pre-release only
 
 ---
 
@@ -244,30 +290,20 @@ Release tag → + SystemLLM + Performance (pre-release only)
 
 The application has 4 main layers:
 
-```
-┌─────────────────────────────────────────┐
-│  Telegram Bot (python-telegram-bot)     │  ← Tests in SystemMock/SystemLLM
-│  Handlers: /start, /help, messages      │
-└──────────────┬──────────────────────────┘
-               │
-┌──────────────▼──────────────────────────┐
-│  LangChain Agent (create_agent)         │  ← Tests in UnitLLM, IntegrationMock
-│  Tool: get_weather                      │     IntegrationLLM, SystemLLM
-└──────────────┬──────────────────────────┘
-               │
-┌──────────────▼──────────────────────────┐
-│  Weather Tool (Open-Meteo)              │  ← Tests in UnitMock
-│  - Geocoding API (city → lat, lon)      │     IntegrationMock
-│  - Forecast API (current weather)       │
-└──────────────┬──────────────────────────┘
-               │
-┌──────────────▼──────────────────────────┐
-│  External APIs                          │
-│  - OpenAI (LLM)                         │
-│  - Open-Meteo (Weather)                 │
-│  - Telegram (Bot Platform)              │
-└─────────────────────────────────────────┘
-```
+1. **Telegram Bot (`python-telegram-bot`)**
+   - Handlers: `/start`, `/help`, messages
+   - Mainly tested in: SystemMock, SystemLLM
+2. **LangChain Agent (`create_agent`)**
+   - Tool: `get_weather`
+   - Mainly tested in: UnitLLM, IntegrationMock, IntegrationLLM, SystemLLM
+3. **Weather Tool (Open-Meteo)**
+   - Geocoding API (`city -> lat, lon`)
+   - Forecast API (current weather)
+   - Mainly tested in: UnitMock, IntegrationMock
+4. **External APIs**
+   - OpenAI (LLM)
+   - Open-Meteo (Weather)
+   - Telegram (Bot Platform)
 
 ---
 
@@ -301,19 +337,25 @@ The application has 4 main layers:
 
 ## Quick Links
 
-| Document | Purpose | Audience |
-|----------|---------|----------|
-| [Testing Layers Guide](testing_layers.md) | Detailed specs for each layer | Developers, QA |
-| [Testing Categories & Safety](testing_categories_and_safety.md) | Functional, non-functional, safety, behavior tests | QA, security engineers |
-| [LLM Metrics & DeepEval](llm_metrics_and_deepeval.md) | How to measure output quality | AI specialists, QA |
-| [Critical Gaps & Impact](#critical-gaps--impact) | Prioritized implementation roadmap | Managers, sprint planners |
+- [Testing Layers Guide](testing_layers.md)
+   - Purpose: Detailed specs for each layer
+   - Audience: Developers, QA
+- [Testing Categories & Safety](testing_categories_and_safety.md)
+   - Purpose: Functional, non-functional, safety, behavior tests
+   - Audience: QA, security engineers
+- [LLM Metrics & DeepEval](llm_metrics_and_deepeval.md)
+   - Purpose: How to measure output quality
+   - Audience: AI specialists, QA
+- [Critical Gaps & Impact](#critical-gaps--impact)
+   - Purpose: Prioritized implementation roadmap
+   - Audience: Managers, sprint planners
 
 ---
 
 ## Questions?
 
 - **How do I write a new test?** → See [Testing Layers Guide](testing_layers.md)
-- **What's the difference between layers?** → See [Quick Comparison Table](#test-layers-at-a-glance) above
+- **What's the difference between layers?** → See [Test Layers at a Glance](#test-layers-at-a-glance) above
 - **How do I test the LLM quality?** → See [LLM Metrics & DeepEval](llm_metrics_and_deepeval.md)
 - **What should I prioritize?** → See [Critical Gaps & Impact](#critical-gaps--impact)
 

@@ -15,47 +15,37 @@ This document provides comprehensive guidance on measuring LLM agent output qual
 
 DeepEval solves the problem of testing non-deterministic LLM outputs:
 
-| Problem | Traditional Testing | DeepEval Solution |
-|---------|---------------------|-------------------|
-| LLM output varies | Can't assert exact match | Uses LLM-as-judge metrics |
-| Quality is subjective | Hard to measure "good" | Provides 50+ metrics |
-| No automated evaluation | Manual review required | Automated evaluation |
-| Cost tracking | Manual logging | Built-in cost tracking |
-| CI/CD integration | Custom setup | Native pytest integration |
+- **LLM output varies**
+    - Traditional testing: Can't assert exact match
+    - DeepEval solution: Uses LLM-as-judge metrics
+- **Quality is subjective**
+    - Traditional testing: Hard to measure "good"
+    - DeepEval solution: Provides 50+ metrics
+- **No automated evaluation**
+    - Traditional testing: Manual review required
+    - DeepEval solution: Automated evaluation
+- **Cost tracking**
+    - Traditional testing: Manual logging
+    - DeepEval solution: Built-in cost tracking
+- **CI/CD integration**
+    - Traditional testing: Custom setup
+    - DeepEval solution: Native pytest integration
 
 ---
 
 ## DeepEval Architecture
 
-```
-┌─────────────────────────────────────────┐
-│  User Query                             │
-│  "Що одягнути в Києві?"                │
-└────────────────┬────────────────────────┘
-                 │
-┌────────────────▼────────────────────────┐
-│  Your Agent (ask_agent)                 │
-│  Uses: get_weather + OpenAI LLM         │
-└────────────────┬────────────────────────┘
-                 │
-┌────────────────▼────────────────────────┐
-│  LLMTestCase                            │
-│  input, actual_output, expected_output  │
-└────────────────┬────────────────────────┘
-                 │
-┌────────────────▼────────────────────────┐
-│  DeepEval Metrics (LLM-as-Judge)        │
-│  - AnswerRelevancyMetric                │
-│  - ToolCorrectnessMetric                │
-│  - HallucinationMetric                  │
-│  - FaithfulnessMetric                   │
-└────────────────┬────────────────────────┘
-                 │
-┌────────────────▼────────────────────────┐
-│  Score (0.0 - 1.0)                      │
-│  Pass/fail depends on metric semantics  │
-└─────────────────────────────────────────┘
-```
+1. **User query**
+    - Example: "Що одягнути в Києві?"
+2. **Agent execution (`ask_agent`)**
+    - Uses `get_weather` + OpenAI LLM
+3. **Test case construction (`LLMTestCase`)**
+    - Includes `input`, `actual_output`, and optional expectations/context
+4. **Metric evaluation (LLM-as-judge)**
+    - Typical metrics: `AnswerRelevancyMetric`, `ToolCorrectnessMetric`, `HallucinationMetric`, `FaithfulnessMetric`
+5. **Score output**
+    - Numeric score in range `0.0-1.0`
+    - Pass/fail depends on each metric threshold and semantics
 
 ---
 
@@ -449,13 +439,20 @@ export CONFIDENT_API_KEY="..."
 
 Each metric call costs approximately:
 
-| Metric | Cost per Test | Notes |
-|--------|---------------|-------|
-| **ToolCorrectnessMetric** | $0.002-0.005 | Simple LLM check |
-| **AnswerRelevancyMetric** | $0.003-0.008 | Moderate reasoning |
-| **HallucinationMetric** | $0.005-0.010 | Complex comparison |
-| **FaithfulnessMetric** | $0.005-0.010 | Complex comparison |
-| **4 metrics combined** | $0.015-0.033 | Per test case |
+- **ToolCorrectnessMetric**
+    - Cost per test: `$0.002-0.005`
+    - Notes: Simple LLM check
+- **AnswerRelevancyMetric**
+    - Cost per test: `$0.003-0.008`
+    - Notes: Moderate reasoning
+- **HallucinationMetric**
+    - Cost per test: `$0.005-0.010`
+    - Notes: Complex comparison
+- **FaithfulnessMetric**
+    - Cost per test: `$0.005-0.010`
+    - Notes: Complex comparison
+- **All 4 metrics combined**
+    - Cost per test case: `$0.015-0.033`
 
 **Example**: 10 test cases × 4 metrics × $0.020 = **$0.80 per test run**
 
@@ -718,12 +715,26 @@ def test_with_retries():
 
 ## Summary: When to Use Each Metric
 
-| Query Type | Recommended Metrics | Threshold | Cost | When Run |
-|------------|---------------------|-----------|------|----------|
-| **Weather query** | Relevance + ToolCorrectness | 0.7 + 0.7 | $0.008 | Every PR |
-| **Safety test** | Hallucination + Leakage | 0.1 + 0.0 | $0.007 | Pre-release |
-| **Quality audit** | All 4 metrics | 0.7 + 0.7 + 0.1 + 0.7 | $0.025 | Nightly |
-| **Regression test** | Relevance only | 0.7 | $0.005 | Every commit |
+- **Weather query**
+    - Recommended metrics: Relevance + ToolCorrectness
+    - Thresholds: `0.7 + 0.7`
+    - Approx. cost: `$0.008`
+    - Typical run cadence: Every PR
+- **Safety test**
+    - Recommended metrics: Hallucination + Leakage
+    - Thresholds: `0.1 + 0.0`
+    - Approx. cost: `$0.007`
+    - Typical run cadence: Pre-release
+- **Quality audit**
+    - Recommended metrics: All 4 metrics
+    - Thresholds: `0.7 + 0.7 + 0.1 + 0.7`
+    - Approx. cost: `$0.025`
+    - Typical run cadence: Nightly
+- **Regression test**
+    - Recommended metrics: Relevance only
+    - Threshold: `0.7`
+    - Approx. cost: `$0.005`
+    - Typical run cadence: Every commit
 
 ---
 
