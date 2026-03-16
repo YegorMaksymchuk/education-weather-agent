@@ -1,4 +1,3 @@
-```markdown name=testing_categories_and_safety.md
 # Testing Categories & Safety
 
 ## Overview
@@ -7,7 +6,6 @@ This document outlines the **4 main categories of tests** and how they apply acr
 
 **Read Time**: 10-15 minutes  
 **For**: QA engineers, security teams, test architects  
-**Prerequisites**: [Testing Layers Guide](testing_layers.md)
 
 ---
 

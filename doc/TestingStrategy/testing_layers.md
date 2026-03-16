@@ -1,4 +1,3 @@
-```markdown name=testing_layers.md
 # Testing Layers Guide
 
 ## Overview
@@ -7,7 +6,6 @@ This guide provides detailed specifications for each of the **6 test layers** in
 
 **Read Time**: 15-20 minutes  
 **For**: Developers, QA engineers, test maintainers  
-**Prerequisites**: Familiarity with [Testing Strategy Overview](testing_strategy_overview.md)
 
 ---
 

@@ -1,4 +1,3 @@
-```markdown name=testing_strategy_overview.md
 # Testing Strategy Overview
 
 ## Purpose
@@ -6,7 +5,6 @@ This document provides a high-level summary of the testing strategy for the **Ed
 
 **Audience**: Architects, engineering leads, managers, QA coordinators  
 **Read Time**: 5-10 minutes  
-**Next Steps**: See [Testing Layers Guide](testing_layers.md) for detailed specifications
 
 ---
 

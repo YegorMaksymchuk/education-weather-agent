@@ -1,4 +1,3 @@
-```markdown name=llm_metrics_and_deepeval.md
 # LLM Metrics & DeepEval
 
 ## Overview
@@ -7,7 +6,6 @@ This document provides comprehensive guidance on measuring LLM agent output qual
 
 **Read Time**: 12-15 minutes  
 **For**: AI specialists, QA engineers, test architects  
-**Prerequisites**: [Testing Layers Guide](testing_layers.md), [Testing Categories & Safety](testing_categories_and_safety.md)
 
 ---
 
