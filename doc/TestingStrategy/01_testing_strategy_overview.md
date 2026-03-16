@@ -335,13 +335,13 @@ The application has 4 main layers:
 
 ## Quick Links
 
-- [Testing Layers Guide](testing_layers.md)
+- [Testing Layers Guide](02_testing_layers.md)
    - Purpose: Detailed specs for each layer
    - Audience: Developers, QA
-- [Testing Categories & Safety](testing_categories_and_safety.md)
+- [Testing Categories & Safety](03_testing_categories_and_safety.md)
    - Purpose: Functional, non-functional, safety, behavior tests
    - Audience: QA, security engineers
-- [LLM Metrics & DeepEval](llm_metrics_and_deepeval.md)
+- [LLM Metrics & DeepEval](04_llm_metrics_and_deepeval.md)
    - Purpose: How to measure output quality
    - Audience: AI specialists, QA
 - [Critical Gaps & Impact](#critical-gaps--impact)
@@ -352,9 +352,9 @@ The application has 4 main layers:
 
 ## Questions?
 
-- **How do I write a new test?** → See [Testing Layers Guide](testing_layers.md)
+- **How do I write a new test?** → See [Testing Layers Guide](02_testing_layers.md)
 - **What's the difference between layers?** → See [Test Layers at a Glance](#test-layers-at-a-glance) above
-- **How do I test the LLM quality?** → See [LLM Metrics & DeepEval](llm_metrics_and_deepeval.md)
+- **How do I test the LLM quality?** → See [LLM Metrics & DeepEval](04_llm_metrics_and_deepeval.md)
 - **What should I prioritize?** → See [Critical Gaps & Impact](#critical-gaps--impact)
 
 ---

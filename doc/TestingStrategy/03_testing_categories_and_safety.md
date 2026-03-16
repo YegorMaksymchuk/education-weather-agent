@@ -552,9 +552,9 @@ pytest -m safety -v --tb=short
 
 ## Next Steps
 
-- For **detailed metrics setup**, see [LLM Metrics & DeepEval](llm_metrics_and_deepeval.md)
-- For **implementation priorities**, see [Testing Strategy Overview](testing_strategy_overview.md)
-- For **layer-by-layer specs**, see [Testing Layers Guide](testing_layers.md)
+- For **detailed metrics setup**, see [LLM Metrics & DeepEval](04_llm_metrics_and_deepeval.md)
+- For **implementation priorities**, see [Testing Strategy Overview](01_testing_strategy_overview.md)
+- For **layer-by-layer specs**, see [Testing Layers Guide](02_testing_layers.md)
 
 ---
 

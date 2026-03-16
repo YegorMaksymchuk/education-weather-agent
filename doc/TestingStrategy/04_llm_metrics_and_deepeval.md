@@ -738,9 +738,9 @@ def test_with_retries():
 
 ## Next Steps
 
-- For **safety testing patterns**, see [Testing Categories & Safety](testing_categories_and_safety.md)
-- For **layer specifications**, see [Testing Layers Guide](testing_layers.md)
-- For **implementation priorities**, see [Testing Strategy Overview](testing_strategy_overview.md)
+- For **safety testing patterns**, see [Testing Categories & Safety](03_testing_categories_and_safety.md)
+- For **layer specifications**, see [Testing Layers Guide](02_testing_layers.md)
+- For **implementation priorities**, see [Testing Strategy Overview](01_testing_strategy_overview.md)
 
 ---
 

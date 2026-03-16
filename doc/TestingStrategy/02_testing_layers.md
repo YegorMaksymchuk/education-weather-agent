@@ -950,9 +950,9 @@ pytest tests/ -v
 
 ## Next Steps
 
-- For **safety tests**, see [Testing Categories & Safety](testing_categories_and_safety.md)
-- For **quality metrics**, see [LLM Metrics & DeepEval](llm_metrics_and_deepeval.md)
-- For **implementation priorities**, see [Testing Strategy Overview](testing_strategy_overview.md)
+- For **safety tests**, see [Testing Categories & Safety](03_testing_categories_and_safety.md)
+- For **quality metrics**, see [LLM Metrics & DeepEval](04_llm_metrics_and_deepeval.md)
+- For **implementation priorities**, see [Testing Strategy Overview](01_testing_strategy_overview.md)
 
 ---
 
