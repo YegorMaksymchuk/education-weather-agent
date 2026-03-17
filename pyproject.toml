@@ -48,6 +48,7 @@ src = ["src", "tests", "main.py"]
 "main.py" = ["E402"]
 "tests/IntegrationLLM/test_deepeval_metrics.py" = ["E402"]
 "tests/SystemLLM/test_safety.py" = ["E402"]
+"tests/SystemLLM/test_security_prompt_injection.py" = ["E402"]
 
 [tool.ruff.format]
 quote-style = "double"
