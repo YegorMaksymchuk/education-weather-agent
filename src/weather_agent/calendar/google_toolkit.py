@@ -9,7 +9,6 @@
 
 from __future__ import annotations
 
-import os
 from functools import lru_cache
 from typing import Any, List
 
@@ -19,9 +18,10 @@ from langchain_google_community.calendar.utils import (
     get_google_credentials,
 )
 
-
-GOOGLE_CALENDAR_CREDENTIALS_PATH = os.getenv("GOOGLE_CALENDAR_CREDENTIALS_PATH")
-GOOGLE_CALENDAR_TOKEN_PATH = os.getenv("GOOGLE_CALENDAR_TOKEN_PATH")
+from weather_agent.config import (
+    GOOGLE_CALENDAR_CREDENTIALS_PATH,
+    GOOGLE_CALENDAR_TOKEN_PATH,
+)
 
 
 @lru_cache(maxsize=1)
@@ -56,4 +56,3 @@ def get_calendar_tools_for_agent() -> List[Any]:
     toolkit = _build_calendar_toolkit()
     tools = list(toolkit.get_tools())
     return tools
-

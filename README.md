@@ -9,6 +9,7 @@
 - Python 3.10+
 - Токен Telegram-бота ([@BotFather](https://t.me/BotFather))
 - API-ключ OpenAI (для моделі, напр. `gpt-4o-mini`)
+- (опційно) Облікові дані Google Calendar (credentials.json / token.json), якщо хочете, щоб агент враховував ваш розклад через LangChain Google Calendar Toolkit
 
 ## Віртуальне середовище (venv)
 
@@ -52,7 +53,10 @@ pip install -e .
 
 3. За бажанням змініть:
    - **DEFAULT_MODEL** (за замовчуванням `gpt-4o-mini`)
-   - **PROMPT_VERSION** (1 — базовий, 2 — тепліший тон, 3 — з історичною погодою/RAG)
+   - **PROMPT_VERSION** (1 — базовий, 2 — тепліший тон, 3 — з історичною погодою/RAG та інтеграцією з календарем)
+   - **GOOGLE_CALENDAR_CREDENTIALS_PATH** / **GOOGLE_CALENDAR_TOKEN_PATH** (опційні шляхи до файлів `credentials.json` та `token.json` для інтеграції з Google Calendar через LangChain Google Calendar Toolkit)
+
+Детальні кроки розгортання, налаштування Google Calendar та MCP описані в [doc/Deployment_and_MCP_Setup.md](doc/Deployment_and_MCP_Setup.md).
 
 ## Запуск
 
@@ -105,6 +109,107 @@ docker compose up -d
 
 **Безпека:** не копіюйте `.env` в образ; передавайте секрети через `-e` або `--env-file`. Для перевірки образу: `docker scout` або `trivy image`.
 
+## Observability (моніторинг LLM / OpenLIT)
+
+У проєкті підключено **[OpenLIT](https://github.com/openlit/openlit)** — OpenTelemetry-орієнтований SDK для автоматичного збору трейсів, метрик і логів викликів LLM (LangChain, OpenAI, httpx, ChromaDB тощо). Телеметрія відправляється за протоколом **OTLP** у **OpenTelemetry Collector**, далі зберігається в **ClickHouse** і візуалізується в **Grafana** (дашборд «GenAI Cost Dashboard»).
+
+### Як це працює (коротко)
+
+1. У [`main.py`](main.py) викликається `openlit.init(...)` **до** імпорту Telegram-бота, щоб інструментація встигла підключитися до LangChain.
+2. За замовчуванням `OTEL_EXPORTER_OTLP_ENDPOINT` не заданий — експорт у колектор вимкнено (зручно для локальної розробки без Docker-стеку).
+3. У **Docker Compose** сервіс `weather-agent` підключено до мережі `observability-net` і отримує `OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318`.
+4. Колектор обробляє дані (у т.ч. процесор `transform/openlit`) і пише їх у БД `otel` у ClickHouse; Grafana читає таблиці `otel_traces` / `otel_logs`.
+
+### Швидкий старт
+
+1. Підніміть стек observability (ClickHouse, OTel Collector, Grafana):
+
+   ```bash
+   make observability-up
+   ```
+
+2. Запустіть бота на хості з експортом OTLP на `localhost:4318`:
+
+   ```bash
+   make run-with-otel
+   ```
+
+   Або вручну встановіть змінні середовища (див. [`.env.example`](.env.example)) і виконайте `python main.py`.
+
+3. Відкрийте Grafana: **http://localhost:3000** (дефолтний логін Grafana — зазвичай `admin` / `admin` при першому запуску, якщо не змінено). Перегляньте дашборд **GenAI Cost Dashboard**.
+
+### Якщо в Grafana порожні панелі
+
+1. **Перевірте OTLP:** при запуску бота на хості без `make run-with-otel` змінна `OTEL_EXPORTER_OTLP_ENDPOINT` має бути задана в `.env` (наприклад `http://localhost:4318`). Інакше в логах з’явиться попередження, що експорт вимкнено — трейси не потрапляють у ClickHouse. У Docker для сервісу `weather-agent` endpoint задає Compose.
+2. **Панель «Diagnostics: span rows»** на дашборді показує кількість усіх спанів у вибраному часі без фільтра `gen_ai.*`. Якщо **0** — немає даних у ClickHouse (колектор, мережа або не було трафіку). Якщо **> 0**, а інші віджети порожні — перегляньте, чи є в трейсах атрибути GenAI (потрібні реальні виклики LLM через OpenLIT).
+3. **Часовий діапазон** у Grafana (правий верхній кут): розширте, наприклад, до «Last 24 hours», якщо дані з’явилися раніше.
+4. **Джерело даних:** у Grafana → Connections → Data sources → `clickhouse` → **Save & test**. У панелі — **Query inspector**, якщо є помилка SQL або підключення.
+5. **CLI:** після `make observability-up` виконайте `make observability-verify` — покаже кількість рядків у `otel_traces` і ключі `gen_ai.*` у останньому спані (для діагностики без Grafana).
+
+### Pytest і Grafana (`OTEL_TESTS_EXPORT`)
+
+За замовчуванням `pytest` **не** надсилає OTLP — див. [`tests/conftest.py`](tests/conftest.py). Щоб після прогону тестів з’явились трейси/метрики в Grafana:
+
+1. Підніміть стек observability (колектор має слухати `localhost:4318`):
+
+   ```bash
+   make observability-up
+   ```
+
+2. **Усі основні тести з OTLP** (як `test-no-llm`, плюс `IntegrationLLM` і `SystemLLM`; для останніх потрібен **`OPENAI_API_KEY`** у середовищі або `.env`):
+
+   ```bash
+   make test-with-otel-export
+   ```
+
+3. **Лише тести з реальним OpenAI** — найкраще для **заповнення всіх панелей** GenAI Cost Dashboard (`gen_ai.request.model`, токени, вартість тощо). Потрібен **`OPENAI_API_KEY`**:
+
+   ```bash
+   make test-with-otel-llm
+   ```
+
+4. Або **вручну**:
+
+   ```bash
+   OTEL_TESTS_EXPORT=1 OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 pytest tests/
+   ```
+
+   Для лише LLM-тестів (мінімум для повного дашборду):
+
+   ```bash
+   OTEL_TESTS_EXPORT=1 OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 pytest tests/IntegrationLLM/ tests/SystemLLM/
+   ```
+
+У Grafana сервіс зазвичай відображається як **`weather-agent-tests`** (або значення `OTEL_SERVICE_NAME`, якщо задали своє). Детальніше — розділ «Pytest і експорт OTLP» у **[doc/Observability_Guide.md](doc/Observability_Guide.md)**.
+
+### Що моніториться автоматично
+
+- Виклики чат-моделі OpenAI через LangChain (`ChatOpenAI`, `create_agent`).
+- Інструменти агента (погода, RAG, календар) — як зовнішні виклики в залежності від інтеграції.
+- HTTP-запити через `httpx` (наприклад Open-Meteo), за наявності відповідної інструментації OpenLIT.
+- За потреби — увімкнення збору системних метрик через параметри OpenLIT (див. офіційну документацію).
+
+### Деякі атрибути GenAI (у трейсах)
+
+У ClickHouse/Grafana зустрічаються семантичні атрибути на кшталт `gen_ai.system`, `gen_ai.request.model`, `gen_ai.usage.total_tokens`, `gen_ai.usage.cost` — вони використовуються дашбордом і правилом алерту «Max Tokens Consumption».
+
+### Алерти
+
+У [`observability/grafana/provisioning/alerting/alert-rules.yaml`](observability/grafana/provisioning/alerting/alert-rules.yaml) налаштовано приклад **алерту за максимальним споживанням токенів** за останню годину. Для сповіщень потрібно налаштувати **contact point** у Grafana (наприклад email).
+
+### Змінні середовища (довідник)
+
+| Змінна | Призначення |
+|--------|-------------|
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | URL OTLP (HTTP), напр. `http://localhost:4318` або `http://otel-collector:4318` у Docker |
+| `OTEL_TESTS_EXPORT` | `1` / `true` — увімкнути експорт OTLP під час `pytest` (інакше в тестах endpoint скидається); разом з `OTEL_EXPORTER_OTLP_ENDPOINT` |
+| `OTEL_SERVICE_NAME` | Назва сервісу в ресурсі трейсів (за замовчуванням `weather-agent`) |
+| `OTEL_DEPLOYMENT_ENVIRONMENT` | Середовище (напр. `development`, `production`) |
+| `OPENLIT_TRACE_CONTENT` | `true`/`false` — чи записувати текст промптів і відповідей (у коді передається як `capture_message_content` у `openlit.init`) |
+| `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT` | Альтернативна назва: якщо задана непорожня, має пріоритет над `OPENLIT_TRACE_CONTENT` |
+
+Детальний розбір усіх файлів у каталозі `observability/` — у **[doc/Observability_Guide.md](doc/Observability_Guide.md)**.
+
 ## Historical / RAG режим
 
 Додатково до поточної погоди агент може підхоплювати **історичні приклади погоди в цей день** (RAG на базі ChromaDB):
@@ -126,6 +231,24 @@ make historical-build  # Потрібен OPENAI_API_KEY і доступ до Op
 ```bash
 make run PROMPT_VERSION=3
 ```
+
+## Інтеграція з Google Calendar через LangChain Toolkit
+
+Агент може враховувати ваші плани й події через **офіційний LangChain Google Calendar Toolkit** (`langchain-google-community[calendar]`). Це працює незалежно від Telegram — календарні інструменти підключаються безпосередньо до LangChain‑агента.
+
+- `src/weather_agent/calendar/google_toolkit.py` — адаптер, який створює `CalendarToolkit` (залежно від ваших credentials) і повертає список інструментів для агента.
+- `src/weather_agent/agent.py` — агент підключає календарні tools з `CalendarToolkit` поряд з `get_weather` та `get_historical_weather`, тому будь‑який клієнт (Telegram, CLI тощо) автоматично отримує доступ до вашого розкладу.
+- `src/weather_agent/prompts/system_prompt_v3.txt` — системний промпт, який пояснює агенту, коли варто звертатися до календаря (коли користувач згадує зустрічі, поїздки, прогулянки тощо) і як поєднувати це з порадою по одягу.
+
+Щоб увімкнути інтеграцію з Google Calendar:
+
+1. Налаштуйте Google Calendar API, як описано в [Google Calendar API quickstart для Python](https://developers.google.com/calendar/api/quickstart/python#authorize_credentials_for_a_desktop_application): отримаєте `credentials.json`, а при першому запуску згенерується `token.json`.
+2. Встановіть залежність (вона вже додана в `pyproject.toml` та `requirements.txt`):
+   - `langchain-google-community[calendar]` (див. офіційні доки: [Google calendar toolkit integration](https://docs.langchain.com/oss/python/integrations/tools/google_calendar)).
+3. Додайте в `.env` (або покладіть файли в дефолтні шляхи):
+   - `GOOGLE_CALENDAR_CREDENTIALS_PATH=./credentials.json`
+   - `GOOGLE_CALENDAR_TOKEN_PATH=./token.json`
+4. Запустіть бота як зазвичай (`make run` / `python main.py`). Якщо користувач згадує плани/події, агент зможе використовувати календарні інструменти для уточнення поради по одягу з урахуванням вашого розкладу.
 
 ## CI (GitHub Actions)
 
@@ -162,6 +285,10 @@ make docker-run         # Зібрати і запустити контейне�
 make docker-up          # docker compose up -d
 make docker-down        # docker compose down
 make docker-logs        # docker compose logs -f
+make observability-up   # Лише ClickHouse + OTel Collector + Grafana
+make observability-down # docker compose down
+make observability-logs # Логи otel-collector
+make run-with-otel      # Бот з OTLP на localhost:4318 (після observability-up)
 ```
 
 На Windows використовуйте `make` з Git Bash або WSL; Makefile визначає `venv\Scripts` для Windows.
@@ -191,13 +318,26 @@ support-wather-agent/
 ├── LICENSE                    # MIT
 ├── README.md
 ├── doc/
+│   ├── Deployment_and_MCP_Setup.md    # Розгортання, налаштування .env, Google Calendar, MCP
+│   ├── Observability_Guide.md         # Детальний опис observability: OpenLIT, OTel Collector, Grafana, файли
 │   └── Idea_How_To_Test_AI_Agent.md   # Матеріал з тестування AI-агентів (unit/integration/system, DeepEval)
+├── observability/
+│   ├── otel-collector-config.yaml     # Конфігурація OpenTelemetry Collector (OTLP → ClickHouse)
+│   ├── clickhouse/initdb/             # Init-скрипти БД (створення `otel`)
+│   └── grafana/provisioning/          # Grafana: datasources, dashboards, alerting
 ├── src/weather_agent/
 │   ├── __init__.py
 │   ├── config.py              # Змінні середовища (DEFAULT_MODEL, PROMPT_VERSION тощо)
 │   ├── weather.py             # Tool get_weather: Open-Meteo Geocoding + Forecast
-│   ├── agent.py               # LangChain-агент (create_agent, ask_agent), підключення промпта та historical tool
+│   ├── agent.py               # LangChain-агент (create_agent, ask_agent), підключення промпта, historical tool та інструментів Google Calendar Toolkit
 │   ├── bot.py                 # Telegram long polling: /start, /help, обробка текстових повідомлень
+│   ├── mcp/                   # Інтеграція з MCP-серверами (загальний клієнт, не використовується для календаря після міграції)
+│   │   ├── __init__.py
+│   │   ├── client.py          # McpClientBase, HttpJsonRpcMcpClient, get_default_mcp_client
+│   │   └── tools.py           # Інструменти поверх MCP (можуть бути використані для інших сервісів у майбутньому)
+│   ├── calendar/              # Інтеграція з Google Calendar через LangChain Google Calendar Toolkit
+│   │   ├── __init__.py
+│   │   └── google_toolkit.py  # Адаптер CalendarToolkit, get_calendar_tools_for_agent()
 │   ├── historical/            # Історична погода/RAG (ChromaDB)
 │   │   ├── chunks.py          # Форматування/валідація денних записів
 │   │   ├── store.py           # Побудова та збереження Chroma-колекції з CSV
@@ -217,7 +357,10 @@ support-wather-agent/
     │   ├── test_weather.py
     │   ├── test_config.py
     │   ├── test_bot_texts.py
-    │   └── test_prompts.py
+    │   ├── test_prompts.py
+    │   ├── test_mcp_client.py          # Тести MCP-клієнта (HttpJsonRpcMcpClient)
+    │   ├── test_mcp_tools.py           # Тести MCP-based tools (залишені для сумісності, календар більше не використовує MCP)
+    │   └── test_calendar_toolkit_adapter.py  # Тести адаптера LangChain Google Calendar Toolkit
     ├── UnitLLM/               # Юніт з фейковим LLM (GenericFakeChatModel)
     │   ├── conftest.py
     │   └── test_agent_fake_model.py

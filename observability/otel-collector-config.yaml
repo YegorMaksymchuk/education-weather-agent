@@ -1,0 +1,83 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+processors:
+  batch:
+    send_batch_size: 10000
+    send_batch_max_size: 11000
+    timeout: 10s
+  resourcedetection:
+    # Using OTEL_RESOURCE_ATTRIBUTES envvar, env detector adds custom labels.
+    detectors: [env, system]
+    timeout: 2s
+  transform/openlit:
+    # Fix OpenLiT issue when actually ResourceAttributes are set in SpanAttributes
+    error_mode: ignore
+    trace_statements:
+      - set(resource.attributes["service.name"], span.attributes["service.name"]) where span.attributes["service.name"] != nil
+      - set(resource.attributes["deployment.environment"], span.attributes["deployment.environment"]) where span.attributes["deployment.environment"] != nil
+      - set(resource.attributes["telemetry.sdk.name"], span.attributes["telemetry.sdk.name"]) where span.attributes["telemetry.sdk.name"] != nil
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+  pprof:
+    endpoint: 0.0.0.0:1777
+exporters:
+  clickhouse:
+    endpoint: tcp://clickhouse:9000?dial_timeout=5s&compress=lz4
+    username: default
+    database: otel
+    create_schema: true
+    async_insert: false
+service:
+  telemetry:
+    logs:
+      encoding: json
+    metrics:
+      level: normal
+      readers:
+        - periodic:
+            interval: 10000
+            # Timeout for reader itself, in milliseconds
+            timeout: 3000
+            exporter:
+              otlp:
+                protocol: http/protobuf
+                endpoint: http://localhost:4318
+                compression: gzip
+                insecure: true
+                # Timeout for sending telemetry, in milliseconds
+                timeout: 5000
+  extensions:
+    - health_check
+    - pprof
+  pipelines:
+    traces:
+      receivers:
+        - otlp
+      processors:
+        - resourcedetection
+        - transform/openlit
+        - batch
+      exporters:
+        - clickhouse
+    metrics:
+      receivers:
+        - otlp
+      processors:
+        - resourcedetection
+        - batch
+      exporters:
+        - clickhouse
+    logs:
+      receivers:
+        - otlp
+      processors:
+        - resourcedetection
+        - batch
+      exporters:
+        - clickhouse

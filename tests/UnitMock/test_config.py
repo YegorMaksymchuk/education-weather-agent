@@ -9,7 +9,7 @@ from weather_agent.config import PROMPT_VERSION, DEFAULT_MODEL
 class TestConfig:
     def test_prompt_version_is_string(self):
         assert isinstance(PROMPT_VERSION, str)
-        assert PROMPT_VERSION in ("1", "2")
+        assert PROMPT_VERSION in ("1", "2", "3")
 
     def test_default_model_set(self):
         assert isinstance(DEFAULT_MODEL, str)

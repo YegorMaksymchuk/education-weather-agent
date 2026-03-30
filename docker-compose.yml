@@ -1,3 +1,18 @@
+x-common: &common
+  networks:
+    - observability-net
+  restart: unless-stopped
+  logging:
+    options:
+      max-size: 50m
+      max-file: "3"
+x-db-depend: &db-depend
+  !!merge <<: *common
+  depends_on:
+    clickhouse:
+      condition: service_healthy
+    schema-migrator-sync:
+      condition: service_completed_successfully
 services:
   weather-agent:
     build: .
@@ -8,3 +23,88 @@ services:
     read_only: true
     tmpfs:
       - /tmp
+    networks:
+      - observability-net
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_SERVICE_NAME=weather-agent
+      - OTEL_DEPLOYMENT_ENVIRONMENT=production
+    depends_on:
+      otel-collector:
+        condition: service_started
+
+  clickhouse:
+    !!merge <<: *common
+    image: clickhouse/clickhouse-server:${CLICKHOUSE_VERSION:-25.3-alpine}
+    container_name: otel-clickhouse
+    tty: true
+    ports:
+      - "9000:9000"
+    #   - "8123:8123"
+    #   - "9181:9181"
+    volumes:
+      - ./observability/clickhouse/initdb:/docker-entrypoint-initdb.d/
+      - clickhouse:/var/lib/clickhouse/
+    environment:
+      - CLICKHOUSE_SKIP_USER_SETUP=1
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - --spider
+        - -q
+        - 0.0.0.0:8123/ping
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 262144
+        hard: 262144
+  grafana:
+    !!merge <<: *common
+    image: grafana/grafana:${GRAFANA_VERSION:-12.0.2}
+    container_name: otel-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning
+      - grafana:/var/lib/grafana/
+    environment:
+      - GF_PLUGINS_PREINSTALL=grafana-clickhouse-datasource
+      - GF_DATAPROXY_SEND_USER_HEADER=true
+    healthcheck:
+      test: curl -f http://localhost:3000/api/health || exit 1
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+
+  otel-collector:
+    !!merge <<: *common
+    image: otel/opentelemetry-collector-contrib:${OTELCOL_VERSION:-0.129.1}
+    container_name: otel-collector
+    command:
+      - --config=/etc/otel-collector-config.yaml
+    volumes:
+      - ./observability/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      # - "1777:1777"     # pprof extension
+      - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP HTTP receiver
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+
+networks:
+  observability-net:
+    name: observability-net
+
+volumes:
+  clickhouse:
+    name: observability-clickhouse
+  grafana:
+    name: observability-grafana

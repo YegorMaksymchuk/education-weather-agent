@@ -33,6 +33,7 @@ dmypy.json
 # Virtual environments
 venv/
 .venv/
+.venv-otel-test/
 env/
 .env.local
 .env.*.local
@@ -83,3 +84,5 @@ data/
 artifacts/
 chroma_langchain_db/
 # *.plan.md
+credentials.json
+token.json

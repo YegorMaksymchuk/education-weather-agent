@@ -2,6 +2,11 @@
 
 Ці інструменти не прив'язані до Telegram: їх можна використовувати в будь-якому
 клієнті, який викликає наш LangChain-агент.
+
+Примітка: поточний `agent.py` **не реєструє** ці tools — у боті
+використовується Google Calendar Toolkit. Щоб увімкнути саме MCP: додайте
+`get_calendar_events` / `get_today_outdoor_blocks` до `create_agent(..., tools=[...])`
+і задайте `MCP_ENDPOINT` у `.env`.
 """
 
 from __future__ import annotations

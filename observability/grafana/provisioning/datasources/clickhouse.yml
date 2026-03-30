@@ -1,0 +1,26 @@
+apiVersion: 1
+datasources:
+  - name: clickhouse
+    uid: P7E099F39B84EA795
+    type: grafana-clickhouse-datasource
+    access: proxy
+    isDefault: true
+    editable: true
+    jsonData:
+      defaultDatabase: otel
+      host: clickhouse
+      port: 9000
+      protocol: native
+      username: default
+      logs:
+        defaultDatabase: otel
+        defaultTable: otel_logs
+        otelEnabled: true
+        otelVersion: latest
+        timeColumn: Timestamp
+      traces:
+        defaultDatabase: otel
+        defaultTable: otel_traces
+        otelEnabled: true
+        otelVersion: latest
+        traceIdColumn: TraceId

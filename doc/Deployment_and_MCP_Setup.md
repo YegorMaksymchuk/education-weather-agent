@@ -196,6 +196,8 @@ docker run --rm --env-file .env \
 - **Інтеграційний тест FastMCP (окремо):**  
   `pytest tests/integration_mcp/ -v`  
   Потрібна dev-залежність `fastmcp` (`pip install -e ".[dev]"`). Тест запускає тестовий FastMCP-сервер у subprocess (один tool `echo`), підключається до нього через FastMCP Client і перевіряє виклик `call_tool("echo", {"text": "hello"})`.
+- **Тести з експортом OTLP у Grafana (опційно):** після `make observability-up` — `make test-with-otel-export` (усі основні тести + LLM при наявності `OPENAI_API_KEY`) або **`make test-with-otel-llm`** (лише IntegrationLLM/SystemLLM — найкраще для заповнення всіх панелей GenAI; потрібен `OPENAI_API_KEY`); вручну:  
+  `OTEL_TESTS_EXPORT=1 OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 pytest tests/` — деталі в [doc/Observability_Guide.md](Observability_Guide.md) (розділ 7).
 
 ### Що таке FastMCP у контексті проєкту
 
