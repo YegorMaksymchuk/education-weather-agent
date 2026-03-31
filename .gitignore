@@ -33,6 +33,7 @@ dmypy.json
 # Virtual environments
 venv/
 .venv/
+.venv-otel-test/
 env/
 .env.local
 .env.*.local
@@ -79,4 +80,9 @@ Desktop.ini
 
 # Project / artifacts (optional: uncomment if you don’t want to track)
 # compass_artifact_*/
+data/
+artifacts/
+chroma_langchain_db/
 # *.plan.md
+credentials.json
+token.json

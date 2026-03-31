@@ -39,7 +39,7 @@ class TestDeepevalMetrics:
         )
         assert_test(
             test_case,
-            [AnswerRelevancyMetric(threshold=0.5)],
+            [AnswerRelevancyMetric(threshold=0.7)],
         )
 
     def test_tool_correctness_expects_get_weather(self):

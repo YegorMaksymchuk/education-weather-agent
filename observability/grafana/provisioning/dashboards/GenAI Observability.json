@@ -1,0 +1,1833 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 2,
+  "links": [],
+  "panels": [
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "This dashboard displays the usage of LLMs and VectorDBs, tracking OpenTelemetry Traces and Metrics sent using [OpenLIT](https://github.com/openlit/openlit)",
+        "mode": "markdown"
+      },
+      "pluginVersion": "12.0.2",
+      "title": "",
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "P7E099F39B84EA795"
+      },
+      "description": "This panel displays the total number of successful requests made to the GenAI system. A successful request is one that is completed without errors, indicating seamless operation and effective utilization of the GenAI service. Tracking this helps in understanding the reliability and performance of the GenAI system.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 0,
+        "y": 2
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "editorType": "sql",
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.10.1",
+          "queryType": "table",
+          "rawSql": "SELECT uniqExact(SpanId)\r\nFROM otel_traces\r\nWHERE $__timeFilter(Timestamp)\r\nAND SpanAttributes['gen_ai.operation.name'] != ''",
+          "refId": "A"
+        }
+      ],
+      "title": "Total GenAI Requests",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "P7E099F39B84EA795"
+      },
+      "description": "This panel displays the ranking of GenAI models based on their usage frequency. It identifies which models are most popular or in-demand, providing insights into user preferences and operational trends. Analyzing this helps in resource allocation, optimizing model availability, and understanding which GenAI features are driving usage.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 10,
+        "x": 4,
+        "y": 2
+      },
+      "id": 8,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Usage"
+          }
+        ]
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "editorType": "sql",
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.10.1",
+          "queryType": "table",
+          "rawSql": "SELECT\r\n  SpanAttributes['gen_ai.request.model'] as Model,\r\n  uniqExact(SpanId) as Usage\r\nFROM otel_traces\r\nWHERE $__timeFilter(Timestamp)\r\nAND SpanAttributes['gen_ai.request.model'] != ''\r\nGROUP BY Model\r\n",
+          "refId": "A"
+        }
+      ],
+      "title": "Top GenAI Models by Usage",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "P7E099F39B84EA795"
+      },
+      "description": "This panel displays the ranking of tools used by GenAI models, based on their usage frequency. It identifies which tools are most popular or in-demand, providing insights into user preferences and operational trends. Analyzing this helps in resource allocation, optimizing model availability, and understanding which GenAI features are driving usage.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 10,
+        "x": 14,
+        "y": 2
+      },
+      "id": 11,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Usage"
+          }
+        ]
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "editorType": "sql",
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.10.1",
+          "queryType": "table",
+          "rawSql": "SELECT SpanAttributes['gen_ai.tool.name'] AS Tool, count() AS Usage\r\nFROM otel_traces\r\nWHERE $__timeFilter(Timestamp)\r\nAND SpanAttributes['gen_ai.tool.name'] != ''\r\nGROUP BY Tool",
+          "refId": "A"
+        }
+      ],
+      "title": "Top GenAI Tools by Usage",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "P7E099F39B84EA795"
+      },
+      "description": "This panel displays the distribution of GenAI requests across different platforms such as OpenAI, Cohere, Anthropic, etc. It shows where requests are being sent, giving insights into platform popularity and usage patterns. Monitoring this helps in understanding platform preferences, and it can guide strategic decisions for integration or diversification of GenAI services.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 8
+      },
+      "id": 9,
+      "options": {
+        "displayLabels": [],
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value"
+          ]
+        },
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "editorType": "sql",
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.10.1",
+          "queryType": "table",
+          "rawSql": "SELECT \r\n  SpanAttributes['gen_ai.system'] as Platform,\r\n  uniqExact(SpanId) as Requests\r\nFROM otel_traces\r\nWHERE $__timeFilter(Timestamp)\r\nAND SpanAttributes['gen_ai.system'] != ''\r\nGROUP BY Platform",
+          "refId": "A"
+        }
+      ],
+      "title": "GenAI Requests by Platform",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "P7E099F39B84EA795"
+      },
+      "description": "This panel displays the breakdown of GenAI requests by type, such as Chat, Embedding, Image, Audio, and Fine Tuning. It reveals the diversity in usage, highlighting which types of requests are most common. Understanding this distribution assists in optimizing resources for the most demanded services and planning for future needs based on usage trends.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 8
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value"
+          ]
+        },
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "editorType": "sql",
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.10.1",
+          "queryType": "table",
+          "rawSql": "SELECT \r\n  SpanAttributes['gen_ai.operation.name'] as Type,\r\n  uniqExact(SpanId) as Requests\r\nFROM otel_traces\r\nWHERE $__timeFilter(Timestamp)\r\nAND SpanAttributes['gen_ai.operation.name'] != ''\r\nGROUP BY Type",
+          "refId": "A"
+        }
+      ],
+      "title": "GenAI Requests by Type",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "P7E099F39B84EA795"
+      },
+      "description": "This panel displays the distribution of GenAI requests based on the application. It shows where the requests are being utilized, providing a clear picture of operational focus and deployment strategies. Tracking this helps in aligning resources appropriately and optimizing the performance across different environments.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "Requests"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 8
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value"
+          ]
+        },
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "editorType": "sql",
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.10.1",
+          "queryType": "table",
+          "rawSql": "SELECT \r\n  ServiceName,\r\n  uniqExact(SpanId) as Requests\r\nFROM otel_traces\r\nWHERE $__timeFilter(Timestamp)\r\nAND SpanAttributes['gen_ai.system'] != ''\r\nGROUP BY ServiceName",
+          "refId": "A"
+        }
+      ],
+      "title": "GenAI Requests by Application",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "P7E099F39B84EA795"
+      },
+      "description": "This panel displays the distribution of GenAI requests based on the environment, such as production, development, testing, etc. It shows where the requests are being utilized, providing a clear picture of operational focus and deployment strategies. Tracking this helps in aligning resources appropriately and optimizing the performance across different environments.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 8
+      },
+      "id": 12,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value"
+          ]
+        },
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "editorType": "sql",
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.10.1",
+          "queryType": "table",
+          "rawSql": "SELECT \r\n  SpanAttributes['deployment.environment'] as Environment,\r\n  uniqExact(SpanId) as Requests\r\nFROM otel_traces\r\nWHERE $__timeFilter(Timestamp)\r\nAND SpanAttributes['deployment.environment'] != ''\r\nAND SpanAttributes['gen_ai.system'] != ''\r\nGROUP BY Environment",
+          "refId": "A"
+        }
+      ],
+      "title": "GenAI Requests by Environment",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "P7E099F39B84EA795"
+      },
+      "description": "This panel displays the Avg total tokens consumed by GenAI requests, providing a direct measure of usage. Monitoring this helps in assessing the demand on GenAI services and guiding resource allocation or optimization strategies.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 0,
+        "y": 14
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "editorType": "sql",
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.10.1",
+          "queryType": "table",
+          "rawSql": "SELECT avg(\r\n  if(SpanAttributes['gen_ai.usage.total_tokens'] != '',\r\n     toInt64OrZero(SpanAttributes['gen_ai.usage.total_tokens']),\r\n     toInt64OrZero(SpanAttributes['gen_ai.usage.input_tokens'])\r\n     + toInt64OrZero(SpanAttributes['gen_ai.usage.output_tokens'])))\r\nFROM otel_traces\r\nWHERE $__timeFilter(Timestamp)\r\nAND (SpanAttributes['gen_ai.usage.total_tokens'] != ''\r\n     OR SpanAttributes['gen_ai.usage.input_tokens'] != '')",
+          "refId": "A"
+        }
+      ],
+      "title": "Avg Total Tokens",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "P7E099F39B84EA795"
+      },
+      "description": "This panel displays the Avg number of prompt tokens consumed by GenAI requests, providing a direct measure of usage. Monitoring this helps in assessing the demand on GenAI services and guiding resource allocation or optimization strategies.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 5,
+        "x": 4,
+        "y": 14
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "editorType": "sql",
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.10.1",
+          "queryType": "table",
+          "rawSql": "SELECT avg(toInt64OrZero(SpanAttributes['gen_ai.usage.input_tokens']))\r\nFROM otel_traces\r\nWHERE $__timeFilter(Timestamp)\r\nAND SpanAttributes['gen_ai.usage.input_tokens'] != ''",
+          "refId": "A"
+        }
+      ],
+      "title": "Avg Prompt Tokens",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "P7E099F39B84EA795"
+      },
+      "description": "This panel displays the average number of completion tokens consumed by GenAI requests, providing a direct measure of usage. Monitoring this helps in assessing the demand on GenAI services and guiding resource allocation or optimization strategies.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 5,
+        "x": 9,
+        "y": 14
+      },
+      "id": 7,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "editorType": "sql",
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.10.1",
+          "queryType": "table",
+          "rawSql": "SELECT avg(toInt64OrZero(SpanAttributes['gen_ai.usage.output_tokens']))\r\nFROM otel_traces\r\nWHERE $__timeFilter(Timestamp)\r\nAND SpanAttributes['gen_ai.usage.output_tokens'] != ''",
+          "refId": "A"
+        }
+      ],
+      "title": "Avg Completion Tokens",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "P7E099F39B84EA795"
+      },
+      "description": "This panel displays the total cost incurred from using GenAI models. It reflects the financial impact of operational activities, offering insights into budgetary allocation and efficiency. Tracking this helps in effective cost management and financial planning for GenAI usage.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 5,
+        "x": 14,
+        "y": 14
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "editorType": "sql",
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.10.1",
+          "queryType": "table",
+          "rawSql": "SELECT sum(toFloat64OrZero(SpanAttributes['gen_ai.usage.cost']))\r\nFROM otel_traces\r\nWHERE $__timeFilter(Timestamp)\r\nAND SpanAttributes['gen_ai.usage.cost'] != ''",
+          "refId": "A"
+        }
+      ],
+      "title": "Total Usage Cost",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "P7E099F39B84EA795"
+      },
+      "description": "This panel displays the average cost per use of the GenAI models and related services. It provides insights into the cost-effectiveness of interactions with GenAI, helping to identify trends in expense per operation. Monitoring this assists in optimizing budget allocation and improving cost efficiency in GenAI utilization.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 5,
+        "x": 19,
+        "y": 14
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "editorType": "sql",
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.10.1",
+          "queryType": "table",
+          "rawSql": "SELECT avg(toFloat64OrZero(SpanAttributes['gen_ai.usage.cost']))\r\nFROM otel_traces\r\nWHERE $__timeFilter(Timestamp)\r\nAND SpanAttributes['gen_ai.usage.cost'] != ''",
+          "refId": "A"
+        }
+      ],
+      "title": "Avg Usage Cost",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "P7E099F39B84EA795"
+      },
+      "description": "This panel displays an average LLM response duration graph. It provides a visual representation of the GenAI response timing. Analyzing this graph helps in assessing GenAI performance and guiding strategic decisions for efficient resource utilization.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "bars",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ns"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 19
+      },
+      "id": 14,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "builderOptions": {
+            "columns": [
+              {
+                "hint": "time",
+                "name": "Timestamp",
+                "type": "DateTime64(9)"
+              }
+            ],
+            "database": "otel",
+            "filters": [
+              {
+                "condition": "AND",
+                "filterType": "custom",
+                "hint": "time",
+                "key": "",
+                "operator": "WITH IN DASHBOARD TIME RANGE",
+                "type": "datetime"
+              }
+            ],
+            "limit": 1000,
+            "meta": {},
+            "mode": "list",
+            "orderBy": [
+              {
+                "default": true,
+                "dir": "ASC",
+                "hint": "time",
+                "name": ""
+              }
+            ],
+            "queryType": "timeseries",
+            "table": "otel_logs"
+          },
+          "editorType": "sql",
+          "format": 0,
+          "meta": {
+            "builderOptions": {
+              "columns": [
+                {
+                  "hint": "time",
+                  "name": "Timestamp",
+                  "type": "DateTime64(9)"
+                }
+              ],
+              "database": "otel",
+              "filters": [
+                {
+                  "condition": "AND",
+                  "filterType": "custom",
+                  "hint": "time",
+                  "key": "",
+                  "operator": "WITH IN DASHBOARD TIME RANGE",
+                  "type": "datetime"
+                }
+              ],
+              "limit": 1000,
+              "meta": {},
+              "mode": "list",
+              "orderBy": [
+                {
+                  "default": true,
+                  "dir": "ASC",
+                  "hint": "time",
+                  "name": ""
+                }
+              ],
+              "queryType": "timeseries",
+              "table": "otel_logs"
+            }
+          },
+          "pluginVersion": "4.10.1",
+          "queryType": "timeseries",
+          "rawSql": "SELECT\r\n  $__timeInterval(Timestamp) as t,\r\n  avg(Duration) as Duration\r\nFROM otel_traces\r\nWHERE $__timeFilter(Timestamp)\r\nAND SpanAttributes['gen_ai.system'] != ''\r\nGROUP BY t\r\nORDER BY t",
+          "refId": "A"
+        }
+      ],
+      "title": "Average Duration",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "P7E099F39B84EA795"
+      },
+      "description": "This panel displays a comparative graph showing the average number of tokens consumed for completions and prompts against the average usage cost. It provides a visual representation of the relationship between the volume of data processed (in tokens) and the financial implications of using GenAI services. Analyzing this comparison helps in assessing cost-effectiveness and guiding strategic decisions for efficient resource utilization.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "displayName": "${__field.name}",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "C Avg Usage Cost"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 8
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 27
+      },
+      "id": 15,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "builderOptions": {
+            "columns": [
+              {
+                "hint": "time",
+                "name": "Timestamp",
+                "type": "DateTime64(9)"
+              }
+            ],
+            "database": "otel",
+            "filters": [
+              {
+                "condition": "AND",
+                "filterType": "custom",
+                "hint": "time",
+                "key": "",
+                "operator": "WITH IN DASHBOARD TIME RANGE",
+                "type": "datetime"
+              }
+            ],
+            "limit": 1000,
+            "meta": {},
+            "mode": "list",
+            "orderBy": [
+              {
+                "default": true,
+                "dir": "ASC",
+                "hint": "time",
+                "name": ""
+              }
+            ],
+            "queryType": "timeseries",
+            "table": "otel_logs"
+          },
+          "editorType": "sql",
+          "format": 0,
+          "meta": {
+            "builderOptions": {
+              "columns": [
+                {
+                  "hint": "time",
+                  "name": "Timestamp",
+                  "type": "DateTime64(9)"
+                }
+              ],
+              "database": "otel",
+              "filters": [
+                {
+                  "condition": "AND",
+                  "filterType": "custom",
+                  "hint": "time",
+                  "key": "",
+                  "operator": "WITH IN DASHBOARD TIME RANGE",
+                  "type": "datetime"
+                }
+              ],
+              "limit": 1000,
+              "meta": {},
+              "mode": "list",
+              "orderBy": [
+                {
+                  "default": true,
+                  "dir": "ASC",
+                  "hint": "time",
+                  "name": ""
+                }
+              ],
+              "queryType": "timeseries",
+              "table": "otel_logs"
+            }
+          },
+          "pluginVersion": "4.10.1",
+          "queryType": "timeseries",
+          "rawSql": "SELECT\r\n  $__timeInterval(Timestamp) as t,\r\n  avg(toInt64OrZero(SpanAttributes['gen_ai.usage.input_tokens'])) as \"Avg Prompt Tokens\"\r\nFROM otel_traces\r\nWHERE $__timeFilter(Timestamp)\r\nAND SpanAttributes['gen_ai.system'] != ''\r\nGROUP BY t\r\nORDER BY t",
+          "refId": "A"
+        },
+        {
+          "builderOptions": {
+            "columns": [
+              {
+                "hint": "time",
+                "name": "Timestamp",
+                "type": "DateTime64(9)"
+              }
+            ],
+            "database": "otel",
+            "filters": [
+              {
+                "condition": "AND",
+                "filterType": "custom",
+                "hint": "time",
+                "key": "",
+                "operator": "WITH IN DASHBOARD TIME RANGE",
+                "type": "datetime"
+              }
+            ],
+            "limit": 1000,
+            "meta": {},
+            "mode": "list",
+            "orderBy": [
+              {
+                "default": true,
+                "dir": "ASC",
+                "hint": "time",
+                "name": ""
+              }
+            ],
+            "queryType": "timeseries",
+            "table": "otel_logs"
+          },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "P7E099F39B84EA795"
+          },
+          "editorType": "sql",
+          "format": 0,
+          "hide": false,
+          "meta": {
+            "builderOptions": {
+              "columns": [
+                {
+                  "hint": "time",
+                  "name": "Timestamp",
+                  "type": "DateTime64(9)"
+                }
+              ],
+              "database": "otel",
+              "filters": [
+                {
+                  "condition": "AND",
+                  "filterType": "custom",
+                  "hint": "time",
+                  "key": "",
+                  "operator": "WITH IN DASHBOARD TIME RANGE",
+                  "type": "datetime"
+                }
+              ],
+              "limit": 1000,
+              "meta": {},
+              "mode": "list",
+              "orderBy": [
+                {
+                  "default": true,
+                  "dir": "ASC",
+                  "hint": "time",
+                  "name": ""
+                }
+              ],
+              "queryType": "timeseries",
+              "table": "otel_logs"
+            }
+          },
+          "pluginVersion": "4.10.1",
+          "queryType": "timeseries",
+          "rawSql": "SELECT\r\n  $__timeInterval(Timestamp) as t,\r\n  avg(toInt64OrZero(SpanAttributes['gen_ai.usage.output_tokens'])) as \"Avg Completion Tokens\"\r\nFROM otel_traces\r\nWHERE $__timeFilter(Timestamp)\r\nAND SpanAttributes['gen_ai.system'] != ''\r\nGROUP BY t\r\nORDER BY t",
+          "refId": "B"
+        },
+        {
+          "builderOptions": {
+            "columns": [
+              {
+                "hint": "time",
+                "name": "Timestamp",
+                "type": "DateTime64(9)"
+              }
+            ],
+            "database": "otel",
+            "filters": [
+              {
+                "condition": "AND",
+                "filterType": "custom",
+                "hint": "time",
+                "key": "",
+                "operator": "WITH IN DASHBOARD TIME RANGE",
+                "type": "datetime"
+              }
+            ],
+            "limit": 1000,
+            "meta": {},
+            "mode": "list",
+            "orderBy": [
+              {
+                "default": true,
+                "dir": "ASC",
+                "hint": "time",
+                "name": ""
+              }
+            ],
+            "queryType": "timeseries",
+            "table": "otel_logs"
+          },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "P7E099F39B84EA795"
+          },
+          "editorType": "sql",
+          "format": 0,
+          "hide": false,
+          "meta": {
+            "builderOptions": {
+              "columns": [
+                {
+                  "hint": "time",
+                  "name": "Timestamp",
+                  "type": "DateTime64(9)"
+                }
+              ],
+              "database": "otel",
+              "filters": [
+                {
+                  "condition": "AND",
+                  "filterType": "custom",
+                  "hint": "time",
+                  "key": "",
+                  "operator": "WITH IN DASHBOARD TIME RANGE",
+                  "type": "datetime"
+                }
+              ],
+              "limit": 1000,
+              "meta": {},
+              "mode": "list",
+              "orderBy": [
+                {
+                  "default": true,
+                  "dir": "ASC",
+                  "hint": "time",
+                  "name": ""
+                }
+              ],
+              "queryType": "timeseries",
+              "table": "otel_logs"
+            }
+          },
+          "pluginVersion": "4.10.1",
+          "queryType": "timeseries",
+          "rawSql": "SELECT\r\n  $__timeInterval(Timestamp) as t,\r\n  avg(toInt64OrZero(SpanAttributes['gen_ai.usage.cost'])) as \"Avg Usage Cost\"\r\nFROM otel_traces\r\nWHERE $__timeFilter(Timestamp)\r\nAND SpanAttributes['gen_ai.system'] != ''\r\nGROUP BY t\r\nORDER BY t",
+          "refId": "C"
+        }
+      ],
+      "title": "Average Token Consumption vs. Average Usage Cost Comparison",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "P7E099F39B84EA795"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto",
+              "wrapText": false
+            },
+            "inspect": true
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 241
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "TraceId"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 304
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ReqID"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 344
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 16,
+        "w": 24,
+        "x": 0,
+        "y": 35
+      },
+      "id": 16,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Time"
+          }
+        ]
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "editorType": "sql",
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.10.1",
+          "queryType": "table",
+          "rawSql": "SELECT\r\n  toString(Timestamp) AS Time,\r\n  TraceId,\r\n  SpanAttributes['gen_ai.response.id'] AS ReqID,\r\n  SpanAttributes['gen_ai.input.messages'] AS Prompt\r\nFROM otel_traces\r\nWHERE $__timeFilter(Timestamp)\r\nAND SpanAttributes['gen_ai.input.messages'] != ''\r\nAND SpanAttributes['gen_ai.operation.name'] = 'chat'\r\nORDER BY Timestamp DESC\r\nLIMIT 10",
+          "refId": "A"
+        }
+      ],
+      "title": "Sample GenAI Prompts",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "P7E099F39B84EA795"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto",
+              "wrapText": false
+            },
+            "inspect": true
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 241
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "TraceId"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 310
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Type"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 119
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Message"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 440
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 13,
+        "w": 24,
+        "x": 0,
+        "y": 51
+      },
+      "id": 17,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Time"
+          }
+        ]
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "editorType": "sql",
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.10.1",
+          "queryType": "table",
+          "rawSql": "SELECT\r\n  toString(Timestamp) as Time,\r\n  TraceId,\r\n  arrayJoin(arrayMap(x -> x['exception.type'], Events.Attributes)) as Type,\r\n  arrayJoin(arrayMap(x -> x['exception.message'], Events.Attributes)) as Message,\r\n  arrayJoin(arrayMap(x -> x['exception.stacktrace'], Events.Attributes)) as Exception\r\nFROM otel_traces\r\nWHERE $__timeFilter(Timestamp)\r\nAND Exception != ''\r\nORDER By Timestamp DESC\r\nLIMIT 10",
+          "refId": "A"
+        }
+      ],
+      "title": "Last Exceptions",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "P7E099F39B84EA795"
+      },
+      "description": "Count of all spans in otel_traces for the selected time range (no gen_ai filters). If this is zero, OTLP is not reaching ClickHouse or there was no traffic. If this is positive but GenAI panels are empty, spans lack OpenLIT gen_ai.* attributes.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 64
+      },
+      "id": 18,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "editorType": "sql",
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.10.1",
+          "queryType": "table",
+          "rawSql": "SELECT count() AS trace_rows FROM otel_traces WHERE $__timeFilter(Timestamp)",
+          "refId": "A"
+        }
+      ],
+      "title": "Diagnostics: span rows (any span, no GenAI filter)",
+      "type": "stat"
+    }
+  ],
+  "preload": false,
+  "schemaVersion": 41,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "GenAI Cost Dashboard",
+  "uid": "b37d1998-42dd-43bd-a7af-715470d1ada6",
+  "version": 5
+}
