@@ -21,6 +21,8 @@ processors:
       - set(resource.attributes["service.name"], span.attributes["service.name"]) where span.attributes["service.name"] != nil
       - set(resource.attributes["deployment.environment"], span.attributes["deployment.environment"]) where span.attributes["deployment.environment"] != nil
       - set(resource.attributes["telemetry.sdk.name"], span.attributes["telemetry.sdk.name"]) where span.attributes["telemetry.sdk.name"] != nil
+      # Grafana GenAI dashboard expects gen_ai.system; OpenLIT emits gen_ai.provider.name (openai, langchain, …).
+      - set(span.attributes["gen_ai.system"], span.attributes["gen_ai.provider.name"]) where span.attributes["gen_ai.provider.name"] != nil
 extensions:
   health_check:
     endpoint: 0.0.0.0:13133

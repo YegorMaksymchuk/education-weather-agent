@@ -280,7 +280,7 @@
           },
           "pluginVersion": "4.10.1",
           "queryType": "table",
-          "rawSql": "SELECT toolName as Tool, count() as Usage\r\nFROM (\r\n  SELECT arrayJoin(extractAll(SpanAttributes['gen_ai.response.tool_calls'], '.*''name'':\\\\s''(.+?)''.*')) as toolName\r\n  FROM otel_traces\r\n  WHERE $__timeFilter(Timestamp)\r\n  AND SpanAttributes['gen_ai.response.tool_calls'] != ''\r\n  AND SpanAttributes['gen_ai.response.tool_calls'] LIKE '[{%'\r\n)\r\nGROUP BY toolName",
+          "rawSql": "SELECT SpanAttributes['gen_ai.tool.name'] AS Tool, count() AS Usage\r\nFROM otel_traces\r\nWHERE $__timeFilter(Timestamp)\r\nAND SpanAttributes['gen_ai.tool.name'] != ''\r\nGROUP BY Tool",
           "refId": "A"
         }
       ],
@@ -681,7 +681,7 @@
           },
           "pluginVersion": "4.10.1",
           "queryType": "table",
-          "rawSql": "SELECT avg(toInt64OrZero(SpanAttributes['gen_ai.usage.total_tokens']))\r\nFROM otel_traces\r\nWHERE $__timeFilter(Timestamp)\r\nAND SpanAttributes['gen_ai.usage.total_tokens'] != ''",
+          "rawSql": "SELECT avg(\r\n  if(SpanAttributes['gen_ai.usage.total_tokens'] != '',\r\n     toInt64OrZero(SpanAttributes['gen_ai.usage.total_tokens']),\r\n     toInt64OrZero(SpanAttributes['gen_ai.usage.input_tokens'])\r\n     + toInt64OrZero(SpanAttributes['gen_ai.usage.output_tokens'])))\r\nFROM otel_traces\r\nWHERE $__timeFilter(Timestamp)\r\nAND (SpanAttributes['gen_ai.usage.total_tokens'] != ''\r\n     OR SpanAttributes['gen_ai.usage.input_tokens'] != '')",
           "refId": "A"
         }
       ],
@@ -1607,7 +1607,7 @@
           },
           "pluginVersion": "4.10.1",
           "queryType": "table",
-          "rawSql": "SELECT\r\n  toString(Timestamp) as Time,\r\n  TraceId,\r\n  SpanAttributes['gen_ai.response.id'] as ReqID,\r\n  arrayJoin(arrayMap(x -> x['gen_ai.prompt'], Events.Attributes)) as Prompt\r\nFROM otel_traces\r\nWHERE $__timeFilter(Timestamp)\r\nAND Prompt != ''\r\nORDER By Timestamp DESC\r\nLIMIT 10",
+          "rawSql": "SELECT\r\n  toString(Timestamp) AS Time,\r\n  TraceId,\r\n  SpanAttributes['gen_ai.response.id'] AS ReqID,\r\n  SpanAttributes['gen_ai.input.messages'] AS Prompt\r\nFROM otel_traces\r\nWHERE $__timeFilter(Timestamp)\r\nAND SpanAttributes['gen_ai.input.messages'] != ''\r\nAND SpanAttributes['gen_ai.operation.name'] = 'chat'\r\nORDER BY Timestamp DESC\r\nLIMIT 10",
           "refId": "A"
         }
       ],
@@ -1829,5 +1829,5 @@
   "timezone": "browser",
   "title": "GenAI Cost Dashboard",
   "uid": "b37d1998-42dd-43bd-a7af-715470d1ada6",
-  "version": 4
+  "version": 5
 }
